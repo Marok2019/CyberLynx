@@ -10,7 +10,7 @@ activos_bp = Blueprint('activos', __name__)
 def crear_activo():
     """US-001: Registrar activos digitales básicos"""
     # Importación tardía dentro de la función
-    from app.models.activo import Activo
+    from app.models.activos import Activo
     
     try:
         data = request.get_json()
@@ -26,6 +26,10 @@ def crear_activo():
                 'error': f'Tipo debe ser uno de: {", ".join(Activo.get_tipos_validos())}'
             }), 400
         
+
+        user_id_str = get_jwt_identity()
+        user_id = int(user_id_str)
+
         # Crear activo
         activo = Activo(
             nombre=data.get('nombre'),
@@ -53,7 +57,7 @@ def crear_activo():
 def listar_activos():
     """US-002: Buscar y filtrar activos"""
     # Importación tardía
-    from app.models.activo import Activo
+    from app.models.activos import Activo
     
     try:
         # Parámetros de búsqueda
@@ -95,7 +99,7 @@ def listar_activos():
 def modificar_activo(activo_id):
     """US-003: Modificar información de activos"""
     # Importación tardía
-    from app.models.activo import Activo
+    from app.models.activos import Activo
     
     try:
         activo = Activo.query.get_or_404(activo_id)
@@ -132,7 +136,7 @@ def modificar_activo(activo_id):
 def eliminar_activo(activo_id):
     """US-003: Eliminar activos obsoletos"""
     # Importación tardía
-    from app.models.activo import Activo
+    from app.models.activos import Activo
     
     try:
         activo = Activo.query.get_or_404(activo_id)

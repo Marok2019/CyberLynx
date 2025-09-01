@@ -13,10 +13,8 @@ def login():
     POST /api/auth/login
     """
     try:
-        # Getter
         data = request.get_json()
         
-        # Basic check
         if not data or not data.get('email') or not data.get('password'):
             return jsonify({
                 'error': 'Email y contraseña requeridos'
@@ -25,13 +23,12 @@ def login():
         email = data.get('email')
         password = data.get('password')
         
-        # Active user lookup
         user = User.query.filter_by(email=email, activo=True).first()
         
-        # Login auth
         if user and user.check_password(password):
-            # Create JWT
-            access_token = create_access_token(identity=user.id)
+            # CAMBIO: Convertir a string explícitamente
+            user_id_str = str(user.id)
+            access_token = create_access_token(identity=user_id_str)
             
             return jsonify({
                 'access_token': access_token,
@@ -39,7 +36,6 @@ def login():
                 'message': 'Login exitoso'
             }), 200
         
-        # Invalid credentials
         return jsonify({
             'error': 'Credenciales inválidas'
         }), 401

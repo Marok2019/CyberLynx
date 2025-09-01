@@ -19,7 +19,7 @@ def create_app(config_name='development'):
     
     # Importar modelos
     from app.models.user import User
-    from app.models.modelo import Activo
+    from app.models.activos import Activo
     
     # Registrar blueprints (rutas)
     from app.routes.auth import auth_bp
