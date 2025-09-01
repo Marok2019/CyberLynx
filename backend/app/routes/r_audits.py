@@ -5,48 +5,6 @@ from datetime import datetime
 
 audits_bp = Blueprint('audits', __name__)
 
-@audits_bp.route('', methods=['POST'])
-@jwt_required()
-def create_audit():
-    """US-004: Create basic audit"""
-    from app.models.audit import Audit
-    from app.models.asset import Asset
-    
-    try:
-        data = request.get_json()
-        
-        # Validación: nombre obligatorio
-        if not data or not data.get('name'):
-            return jsonify({'error': 'Audit name is required'}), 400
-        
-        # Crear auditoría
-        audit = Audit(
-            name=data.get('name'),
-            description=data.get('description', ''),
-            status='Created',
-            created_by=int(get_jwt_identity())
-        )
-        
-        db.session.add(audit)
-        db.session.flush()  # Para obtener el ID
-        
-        # Asignar assets si se proporcionan
-        asset_ids = data.get('asset_ids', [])
-        if asset_ids:
-            assets = Asset.query.filter(Asset.id.in_(asset_ids)).all()
-            audit.assets.extend(assets)
-        
-        db.session.commit()
-        
-        return jsonify({
-            'message': 'Audit created successfully',
-            'audit': audit.to_dict()
-        }), 201
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': 'Internal server error'}), 500
-
 @audits_bp.route('', methods=['GET'])
 @jwt_required()
 def list_audits():
@@ -113,39 +71,53 @@ def update_audit(audit_id):
         db.session.rollback()
         return jsonify({'error': 'Internal server error'}), 500
 
-@audits_bp.route('/<int:audit_id>/assets', methods=['POST'])
+@audits_bp.route('', methods=['POST'])
 @jwt_required()
-def assign_assets_to_audit(audit_id):
-    """US-004: Assign assets to audit"""
+def create_audit():
+    """US-004: Create basic audit - Versión con una sola transacción"""
     from app.models.audit import Audit
     from app.models.asset import Asset
     
     try:
-        audit = Audit.query.get_or_404(audit_id)
         data = request.get_json()
         
+        if not data or not data.get('name'):
+            return jsonify({'error': 'Audit name is required'}), 400
+        
+        # Validar assets ANTES de crear la auditoría
         asset_ids = data.get('asset_ids', [])
-        if not asset_ids:
-            return jsonify({'error': 'Asset IDs required'}), 400
+        assets = []
         
-        # Buscar assets válidos
-        assets = Asset.query.filter(Asset.id.in_(asset_ids)).all()
+        if asset_ids:
+            assets = Asset.query.filter(Asset.id.in_(asset_ids)).all()
+            found_ids = [asset.id for asset in assets]
+            
+            if len(assets) != len(asset_ids):
+                missing_ids = [aid for aid in asset_ids if aid not in found_ids]
+                return jsonify({'error': f'Assets not found: {missing_ids}'}), 400
         
-        if len(assets) != len(asset_ids):
-            return jsonify({'error': 'Some assets not found'}), 400
+        # Crear auditoría
+        audit = Audit(
+            name=data.get('name'),
+            description=data.get('description', ''),
+            status='Created',
+            created_by=int(get_jwt_identity())
+        )
         
-        # Asignar assets
-        audit.assets = assets
-        db.session.commit()
+        # Asignar assets ANTES del commit
+        audit.assets = assets  # ← Asignación directa
+        
+        db.session.add(audit)
+        db.session.commit()  # ← Un solo commit para todo
         
         return jsonify({
-            'message': f'{len(assets)} assets assigned to audit',
-            'assigned_assets': [asset.to_dict() for asset in assets]
-        }), 200
+            'message': 'Audit created successfully',
+            'audit': audit.to_dict()
+        }), 201
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 @audits_bp.route('/<int:audit_id>/assets', methods=['GET'])
 @jwt_required()
@@ -164,3 +136,26 @@ def get_audit_assets(audit_id):
         
     except Exception as e:
         return jsonify({'error': 'Internal server error'}), 500
+    
+@audits_bp.route('/<int:audit_id>', methods=['DELETE'])
+@jwt_required()
+def delete_audit(audit_id):
+    """Delete audit - SOLUCIÓN PROBLEMA 1"""
+    from app.models.audit import Audit
+    
+    try:
+        audit = Audit.query.get_or_404(audit_id)
+        
+        # Limpiar relaciones antes de eliminar
+        audit.assets.clear()
+        
+        db.session.delete(audit)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Audit deleted successfully'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Error deleting audit: {str(e)}'}), 500
