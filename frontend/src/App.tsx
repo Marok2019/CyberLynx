@@ -252,13 +252,20 @@ const AssetsContent: React.FC = () => {
         <Typography variant="h6" gutterBottom>
           🔍 Buscar y Filtrar Activos (US-002)
         </Typography>
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mb: 2 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', md: 'row' }, 
+          gap: 2, 
+          mb: 2,
+          alignItems: { xs: 'stretch', md: 'flex-end' }
+        }}>
           <TextField
             label="Buscar por Nombre"
             value={filters.name}
             onChange={(e) => handleFilterChange('name', e.target.value)}
             placeholder="Ingrese nombre del activo"
             size="small"
+            sx={{ flex: { xs: '1', md: '2' } }}
           />
 
           <TextField
@@ -268,6 +275,7 @@ const AssetsContent: React.FC = () => {
             onChange={(e) => handleFilterChange('type', e.target.value)}
             SelectProps={{ native: true }}
             size="small"
+            sx={{ flex: 1, minWidth: 150 }}
           >
             <option value="">Todos los Tipos</option>
             <option value="Hardware">Hardware</option>
@@ -282,6 +290,7 @@ const AssetsContent: React.FC = () => {
             onChange={(e) => handleFilterChange('status', e.target.value)}
             SelectProps={{ native: true }}
             size="small"
+            sx={{ flex: 1, minWidth: 150 }}
           >
             <option value="">Todos los Estados</option>
             <option value="Active">Activo</option>
@@ -290,12 +299,17 @@ const AssetsContent: React.FC = () => {
           </TextField>
         </Box>
 
-        <Box>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 1,
+          alignItems: { xs: 'stretch', sm: 'center' }
+        }}>
           <Button
             variant="contained"
             onClick={handleSearch}
-            sx={{ mr: 1 }}
             size="small"
+            sx={{ minWidth: 100 }}
           >
             🔍 Buscar
           </Button>
@@ -303,10 +317,19 @@ const AssetsContent: React.FC = () => {
             variant="outlined"
             onClick={handleClearFilters}
             size="small"
+            sx={{ minWidth: 120 }}
           >
             Limpiar Filtros
           </Button>
-          <Typography variant="caption" sx={{ ml: 2 }}>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              ml: { xs: 0, sm: 2 }, 
+              mt: { xs: 1, sm: 0 },
+              alignSelf: 'center',
+              color: 'text.secondary'
+            }}
+          >
             Encontrados {assets.length} activos
           </Typography>
         </Box>
@@ -533,7 +556,10 @@ const AuditsContent: React.FC = () => {
         setEditingAudit(null);
         resetForm();
         loadAudits();
-        alert(editingAudit ? 'Auditoría actualizada exitosamente' : 'Auditoría creada exitosamente');
+        const message = editingAudit 
+          ? `Auditoría actualizada exitosamente. Activos asignados: ${responseData.assets_assigned || 0}`
+          : `Auditoría creada exitosamente. Activos asignados: ${responseData.assets_assigned || 0}`;
+        alert(message);
       } else {
         alert(responseData.error || 'Error al guardar la auditoría');
       }

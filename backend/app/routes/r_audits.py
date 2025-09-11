@@ -33,12 +33,14 @@ def list_audits():
 @audits_bp.route('/<int:audit_id>', methods=['PUT'])
 @jwt_required()
 def update_audit(audit_id):
-    """US-004: Update audit status"""
+    """US-004: Update audit with assets assignment"""
     from app.models.audit import Audit
+    from app.models.asset import Asset
     
     try:
         audit = Audit.query.get_or_404(audit_id)
         data = request.get_json()
+        print(f"🔍 DEBUG - Actualizando auditoría {audit_id} con datos: {data}")  # Debug temporal
         
         if not data:
             return jsonify({'error': 'Data required'}), 400
@@ -48,6 +50,29 @@ def update_audit(audit_id):
             audit.name = data['name']
         if 'description' in data:
             audit.description = data['description']
+        
+        # CRÍTICO: Actualizar activos asignados
+        if 'asset_ids' in data:
+            asset_ids = data['asset_ids']
+            print(f"🔍 DEBUG - Nuevos asset IDs: {asset_ids}")  # Debug temporal
+            
+            # Obtener los activos válidos
+            if asset_ids:
+                assets = Asset.query.filter(Asset.id.in_(asset_ids)).all()
+                found_ids = [asset.id for asset in assets]
+                print(f"🔍 DEBUG - Assets encontrados: {found_ids}")  # Debug temporal
+                
+                if len(assets) != len(asset_ids):
+                    missing_ids = [aid for aid in asset_ids if aid not in found_ids]
+                    return jsonify({'error': f'Assets not found: {missing_ids}'}), 400
+                
+                # Reemplazar todos los activos asignados
+                audit.assets = assets
+                print(f"🔍 DEBUG - Assets asignados: {len(audit.assets)}")  # Debug temporal
+            else:
+                # Si no hay asset_ids, limpiar todas las asignaciones
+                audit.assets = []
+                print("🔍 DEBUG - Limpiando todas las asignaciones de assets")  # Debug temporal
         
         # Manejo de estados con timestamps
         if 'status' in data and data['status'] in Audit.get_valid_statuses():
@@ -62,14 +87,19 @@ def update_audit(audit_id):
         
         db.session.commit()
         
+        # Verificar que se guardaron correctamente
+        updated_audit = Audit.query.get(audit.id)
+        print(f"🔍 DEBUG - Assets guardados en BD después de actualizar: {len(updated_audit.assets)}")  # Debug temporal
+        
         return jsonify({
             'message': 'Audit updated successfully',
-            'audit': audit.to_dict()
+            'audit': updated_audit.to_dict(),
+            'assets_assigned': len(updated_audit.assets)  # Info adicional
         }), 200
         
     except Exception as e:
+        print(f"🚨 ERROR actualizando auditoría: {str(e)}")  # Debug temporal
         db.session.rollback()
-        return jsonify({'error': 'Internal server error'}), 500
 
 @audits_bp.route('', methods=['POST'])
 @jwt_required()
