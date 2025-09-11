@@ -49,10 +49,10 @@ function App() {
           <AppBar position="static">
             <Toolbar>
               <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                CyberLynx - Welcome {user.name}
+                CyberLynx - Bienvenido {user.name}
               </Typography>
               <Button color="inherit" onClick={handleLogout}>
-                Logout
+                Cerrar Sesión
               </Button>
             </Toolbar>
           </AppBar>
@@ -60,9 +60,9 @@ function App() {
           {/* Tab Navigation */}
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={currentTab} onChange={handleTabChange}>
-              <Tab label="Dashboard" />
-              <Tab label="Assets" />
-              <Tab label="Audits" />
+              <Tab label="Panel Principal" />
+              <Tab label="Activos" />
+              <Tab label="Auditorías" />
             </Tabs>
           </Box>
 
@@ -80,29 +80,28 @@ function App() {
   );
 }
 
-// Componentes de contenido (temporales)
+// Componentes de contenido
 const DashboardContent: React.FC = () => (
   <Paper sx={{ p: 3 }}>
-    <Typography variant="h4" gutterBottom>Dashboard</Typography>
-    <Typography>System overview coming soon...</Typography>
+    <Typography variant="h4" gutterBottom>Panel Principal</Typography>
+    <Typography>Resumen del sistema próximamente...</Typography>
   </Paper>
 );
 
-// Reemplaza AssetsContent por esto:
 const AssetsContent: React.FC = () => {
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingAsset, setEditingAsset] = useState<any>(null);
 
-  // Estados para filtros - campos en inglés
+  // Estados para filtros
   const [filters, setFilters] = useState({
     name: '',
     type: '',
     status: ''
   });
 
-  // Formulario state - campos en inglés
+  // Formulario state
   const [formData, setFormData] = useState({
     name: '',
     type: 'Hardware',
@@ -118,7 +117,6 @@ const AssetsContent: React.FC = () => {
   const loadAssets = async () => {
     setLoading(true);
     try {
-      // URL en inglés
       const params = new URLSearchParams();
       if (filters.name.trim()) params.append('name', filters.name.trim());
       if (filters.type) params.append('type', filters.type);
@@ -132,9 +130,9 @@ const AssetsContent: React.FC = () => {
         }
       });
       const data = await response.json();
-      setAssets(data.assets || []); // Backend responde con 'assets'
+      setAssets(data.assets || []);
     } catch (error) {
-      console.error('Error loading assets:', error);
+      console.error('Error cargando activos:', error);
     } finally {
       setLoading(false);
     }
@@ -158,9 +156,8 @@ const AssetsContent: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validación en inglés
     if (!formData.name.trim()) {
-      alert('Asset name is required');
+      alert('El nombre del activo es obligatorio');
       return;
     }
 
@@ -177,7 +174,7 @@ const AssetsContent: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(formData) // Envía campos en inglés
+        body: JSON.stringify(formData)
       });
 
       if (response.ok) {
@@ -191,14 +188,14 @@ const AssetsContent: React.FC = () => {
           description: ''
         });
         loadAssets();
-        alert(editingAsset ? 'Asset updated successfully' : 'Asset created successfully');
+        alert(editingAsset ? 'Activo actualizado exitosamente' : 'Activo creado exitosamente');
       } else {
         const errorData = await response.json();
-        alert(errorData.error || 'Error saving asset');
+        alert(errorData.error || 'Error al guardar el activo');
       }
     } catch (error) {
-      console.error('Error saving asset:', error);
-      alert('Connection error');
+      console.error('Error guardando activo:', error);
+      alert('Error de conexión');
     }
   };
 
@@ -215,7 +212,7 @@ const AssetsContent: React.FC = () => {
   };
 
   const handleDelete = async (asset: any) => {
-    if (window.confirm(`Delete asset "${asset.name}"?`)) {
+    if (window.confirm(`¿Eliminar el activo "${asset.name}"?`)) {
       try {
         const response = await fetch(`http://127.0.0.1:5000/api/assets/${asset.id}`, {
           method: 'DELETE',
@@ -226,13 +223,13 @@ const AssetsContent: React.FC = () => {
 
         if (response.ok) {
           loadAssets();
-          alert('Asset deleted successfully');
+          alert('Activo eliminado exitosamente');
         } else {
-          alert('Error deleting asset');
+          alert('Error al eliminar el activo');
         }
       } catch (error) {
-        console.error('Error deleting asset:', error);
-        alert('Connection error');
+        console.error('Error eliminando activo:', error);
+        alert('Error de conexión');
       }
     }
   };
@@ -241,55 +238,55 @@ const AssetsContent: React.FC = () => {
     <Paper sx={{ p: 3 }}>
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Assets Management</Typography>
+        <Typography variant="h4">Gestión de Activos</Typography>
         <Button
           variant="contained"
           onClick={() => setShowForm(!showForm)}
         >
-          {showForm ? 'Cancel' : 'Add Asset'}
+          {showForm ? 'Cancelar' : 'Agregar Activo'}
         </Button>
       </Box>
 
       {/* Filtros */}
       <Paper sx={{ p: 2, mb: 3, bgcolor: '#f8f9fa' }}>
         <Typography variant="h6" gutterBottom>
-          🔍 Search & Filter Assets (US-002)
+          🔍 Buscar y Filtrar Activos (US-002)
         </Typography>
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mb: 2 }}>
           <TextField
-            label="Search by Name"
+            label="Buscar por Nombre"
             value={filters.name}
             onChange={(e) => handleFilterChange('name', e.target.value)}
-            placeholder="Enter asset name"
+            placeholder="Ingrese nombre del activo"
             size="small"
           />
 
           <TextField
-            label="Filter by Type"
+            label="Filtrar por Tipo"
             select
             value={filters.type}
             onChange={(e) => handleFilterChange('type', e.target.value)}
             SelectProps={{ native: true }}
             size="small"
           >
-            <option value="">All Types</option>
+            <option value="">Todos los Tipos</option>
             <option value="Hardware">Hardware</option>
             <option value="Software">Software</option>
-            <option value="Network">Network</option>
+            <option value="Network">Red</option>
           </TextField>
 
           <TextField
-            label="Filter by Status"
+            label="Filtrar por Estado"
             select
             value={filters.status}
             onChange={(e) => handleFilterChange('status', e.target.value)}
             SelectProps={{ native: true }}
             size="small"
           >
-            <option value="">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Maintenance">Maintenance</option>
+            <option value="">Todos los Estados</option>
+            <option value="Active">Activo</option>
+            <option value="Inactive">Inactivo</option>
+            <option value="Maintenance">Mantenimiento</option>
           </TextField>
         </Box>
 
@@ -300,17 +297,17 @@ const AssetsContent: React.FC = () => {
             sx={{ mr: 1 }}
             size="small"
           >
-            🔍 Search
+            🔍 Buscar
           </Button>
           <Button
             variant="outlined"
             onClick={handleClearFilters}
             size="small"
           >
-            Clear Filters
+            Limpiar Filtros
           </Button>
           <Typography variant="caption" sx={{ ml: 2 }}>
-            Found {assets.length} assets
+            Encontrados {assets.length} activos
           </Typography>
         </Box>
       </Paper>
@@ -319,18 +316,18 @@ const AssetsContent: React.FC = () => {
       {showForm && (
         <Paper sx={{ p: 2, mb: 3, bgcolor: '#f5f5f5' }}>
           <Typography variant="h6" gutterBottom>
-            {editingAsset ? `✏️ Edit Asset: ${editingAsset.name}` : '➕ Create New Asset (US-001)'}
+            {editingAsset ? `✏️ Editar Activo: ${editingAsset.name}` : '➕ Crear Nuevo Activo (US-001)'}
           </Typography>
           <form onSubmit={handleSubmit}>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
               <TextField
-                label="Name *"
+                label="Nombre *"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
               <TextField
-                label="Type *"
+                label="Tipo *"
                 select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
@@ -338,27 +335,27 @@ const AssetsContent: React.FC = () => {
               >
                 <option value="Hardware">Hardware</option>
                 <option value="Software">Software</option>
-                <option value="Network">Network</option>
+                <option value="Network">Red</option>
               </TextField>
               <TextField
-                label="Location"
+                label="Ubicación"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               />
               <TextField
-                label="Status"
+                label="Estado"
                 select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 SelectProps={{ native: true }}
               >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Maintenance">Maintenance</option>
+                <option value="Active">Activo</option>
+                <option value="Inactive">Inactivo</option>
+                <option value="Maintenance">Mantenimiento</option>
               </TextField>
             </Box>
             <TextField
-              label="Description"
+              label="Descripción"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               multiline
@@ -368,32 +365,32 @@ const AssetsContent: React.FC = () => {
             />
             <Box sx={{ mt: 2 }}>
               <Button type="submit" variant="contained" sx={{ mr: 1 }}>
-                {editingAsset ? 'Update Asset' : 'Create Asset'}
+                {editingAsset ? 'Actualizar Activo' : 'Crear Activo'}
               </Button>
-              <Button onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button onClick={() => setShowForm(false)}>Cancelar</Button>
             </Box>
           </form>
         </Paper>
       )}
 
-      {/* Lista de assets */}
+      {/* Lista de activos */}
       {loading ? (
         <Box sx={{ textAlign: 'center', py: 4 }}>
-          <Typography>Loading assets...</Typography>
+          <Typography>Cargando activos...</Typography>
         </Box>
       ) : (
         <Box>
           {assets.length === 0 ? (
             <Alert severity="info">
               {Object.values(filters).some(v => v) ?
-                'No assets match your search criteria. Try adjusting your filters.' :
-                'No assets found. Create your first asset!'
+                'No se encontraron activos que coincidan con los criterios de búsqueda. Intenta ajustar los filtros.' :
+                'No se encontraron activos. ¡Crea tu primer activo!'
               }
             </Alert>
           ) : (
             <>
               <Typography variant="h6" sx={{ mb: 2 }}>
-                📋 Assets List ({assets.length} items)
+                📋 Lista de Activos ({assets.length} elementos)
               </Typography>
               {assets.map((asset) => (
                 <Paper key={asset.id} sx={{ p: 2, mb: 2, border: '1px solid #e0e0e0' }}>
@@ -403,9 +400,9 @@ const AssetsContent: React.FC = () => {
                         {asset.name}
                       </Typography>
                       <Typography color="textSecondary">
-                        <strong>Type:</strong> {asset.type} •
-                        <strong> Status:</strong> {asset.status} •
-                        <strong> Location:</strong> {asset.location || 'Not specified'}
+                        <strong>Tipo:</strong> {asset.type === 'Hardware' ? 'Hardware' : asset.type === 'Software' ? 'Software' : 'Red'} •
+                        <strong> Estado:</strong> {asset.status === 'Active' ? 'Activo' : asset.status === 'Inactive' ? 'Inactivo' : 'Mantenimiento'} •
+                        <strong> Ubicación:</strong> {asset.location || 'No especificada'}
                       </Typography>
                       {asset.description && (
                         <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
@@ -413,7 +410,7 @@ const AssetsContent: React.FC = () => {
                         </Typography>
                       )}
                       <Typography variant="caption" color="textSecondary">
-                        Created: {new Date(asset.created_at).toLocaleDateString()}
+                        Creado: {new Date(asset.created_at).toLocaleDateString()}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 1 }}>
@@ -422,7 +419,7 @@ const AssetsContent: React.FC = () => {
                         variant="outlined"
                         size="small"
                       >
-                        ✏️ Edit
+                        ✏️ Editar
                       </Button>
                       <Button
                         onClick={() => handleDelete(asset)}
@@ -430,7 +427,7 @@ const AssetsContent: React.FC = () => {
                         variant="outlined"
                         size="small"
                       >
-                        🗑️ Delete
+                        🗑️ Eliminar
                       </Button>
                     </Box>
                   </Box>
@@ -463,7 +460,7 @@ const AuditsContent: React.FC = () => {
 
   useEffect(() => {
     loadAudits();
-    loadAssets(); // Para poder asignar assets a auditorías
+    loadAssets();
   }, []);
 
   const loadAudits = async () => {
@@ -477,7 +474,7 @@ const AuditsContent: React.FC = () => {
       const data = await response.json();
       setAudits(data.audits || []);
     } catch (error) {
-      console.error('Error loading audits:', error);
+      console.error('Error cargando auditorías:', error);
     } finally {
       setLoading(false);
     }
@@ -493,24 +490,25 @@ const AuditsContent: React.FC = () => {
       const data = await response.json();
       setAssets(data.assets || []);
     } catch (error) {
-      console.error('Error loading assets:', error);
+      console.error('Error cargando activos:', error);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validación según PB: nombre y descripción
     if (!formData.name.trim()) {
-      alert('Audit name is required');
+      alert('El nombre de la auditoría es obligatorio');
       return;
     }
 
     try {
       const payload = {
         ...formData,
-        asset_ids: selectedAssets // Asignar activos a auditoría
+        asset_ids: selectedAssets // CRÍTICO: Enviar los IDs de activos seleccionados
       };
+
+      console.log('📤 Enviando payload:', payload); // Debug
 
       const url = editingAudit
         ? `http://127.0.0.1:5000/api/audits/${editingAudit.id}`
@@ -527,35 +525,55 @@ const AuditsContent: React.FC = () => {
         body: JSON.stringify(payload)
       });
 
+      const responseData = await response.json();
+      console.log('📥 Respuesta del servidor:', responseData); // Debug
+
       if (response.ok) {
         setShowForm(false);
         setEditingAudit(null);
         resetForm();
         loadAudits();
-        alert(editingAudit ? 'Audit updated successfully' : 'Audit created successfully');
+        alert(editingAudit ? 'Auditoría actualizada exitosamente' : 'Auditoría creada exitosamente');
       } else {
-        const errorData = await response.json();
-        alert(errorData.error || 'Error saving audit');
+        alert(responseData.error || 'Error al guardar la auditoría');
       }
     } catch (error) {
-      console.error('Error saving audit:', error);
-      alert('Connection error');
+      console.error('Error guardando auditoría:', error);
+      alert('Error de conexión');
     }
   };
 
-  const handleEdit = (audit: any) => {
+  const handleEdit = async (audit: any) => {
     setEditingAudit(audit);
     setFormData({
       name: audit.name,
       description: audit.description || '',
       status: audit.status
     });
-    setSelectedAssets(audit.assigned_assets || []);
+
+    // CRÍTICO: Cargar los activos asignados a esta auditoría
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/api/audits/${audit.id}/assets`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      
+      if (response.ok && data.assets) {
+        const assignedAssetIds = data.assets.map((asset: any) => asset.id);
+        setSelectedAssets(assignedAssetIds);
+        console.log('📋 Activos asignados cargados:', assignedAssetIds); // Debug
+      }
+    } catch (error) {
+      console.error('Error cargando activos de la auditoría:', error);
+    }
+
     setShowForm(true);
   };
 
   const handleDelete = async (audit: any) => {
-    if (window.confirm(`Delete audit "${audit.name}"?`)) {
+    if (window.confirm(`¿Eliminar la auditoría "${audit.name}"?`)) {
       try {
         const response = await fetch(`http://127.0.0.1:5000/api/audits/${audit.id}`, {
           method: 'DELETE',
@@ -566,13 +584,13 @@ const AuditsContent: React.FC = () => {
 
         if (response.ok) {
           loadAudits();
-          alert('Audit deleted successfully');
+          alert('Auditoría eliminada exitosamente');
         } else {
-          alert('Error deleting audit');
+          alert('Error al eliminar la auditoría');
         }
       } catch (error) {
-        console.error('Error deleting audit:', error);
-        alert('Connection error');
+        console.error('Error eliminando auditoría:', error);
+        alert('Error de conexión');
       }
     }
   };
@@ -587,11 +605,14 @@ const AuditsContent: React.FC = () => {
   };
 
   const handleAssetSelection = (assetId: number) => {
-    setSelectedAssets(prev =>
-      prev.includes(assetId)
+    setSelectedAssets(prev => {
+      const newSelection = prev.includes(assetId)
         ? prev.filter(id => id !== assetId)
-        : [...prev, assetId]
-    );
+        : [...prev, assetId];
+      
+      console.log('🔄 Activos seleccionados:', newSelection); // Debug
+      return newSelection;
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -603,16 +624,25 @@ const AuditsContent: React.FC = () => {
     }
   };
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'Created': return 'Creada';
+      case 'In_Progress': return 'En Progreso';
+      case 'Completed': return 'Completada';
+      default: return status;
+    }
+  };
+
   return (
     <Paper sx={{ p: 3 }}>
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Audits Management</Typography>
+        <Typography variant="h4">Gestión de Auditorías</Typography>
         <Button
           variant="contained"
           onClick={() => setShowForm(!showForm)}
         >
-          {showForm ? 'Cancel' : 'Create New Audit'}
+          {showForm ? 'Cancelar' : 'Crear Nueva Auditoría'}
         </Button>
       </Box>
 
@@ -620,52 +650,52 @@ const AuditsContent: React.FC = () => {
       {showForm && (
         <Paper sx={{ p: 3, mb: 3, bgcolor: '#f0f8ff', border: '2px solid #1976d2' }}>
           <Typography variant="h6" gutterBottom>
-            {editingAudit ? `✏️ Edit Audit: ${editingAudit.name}` : '📋 Create New Audit (US-004)'}
+            {editingAudit ? `✏️ Editar Auditoría: ${editingAudit.name}` : '📋 Crear Nueva Auditoría (US-004)'}
           </Typography>
 
           <form onSubmit={handleSubmit}>
             {/* Nombre y descripción */}
             <Box sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 2, mb: 2 }}>
               <TextField
-                label="Audit Name *"
+                label="Nombre de la Auditoría *"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
-                placeholder="e.g., Q1 2024 Security Audit"
+                placeholder="ej., Auditoría de Seguridad Q1 2024"
               />
 
               <TextField
-                label="Status"
+                label="Estado"
                 select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 SelectProps={{ native: true }}
               >
-                <option value="Created">Created</option>
-                <option value="In_Progress">In Progress</option>
-                <option value="Completed">Completed</option>
+                <option value="Created">Creada</option>
+                <option value="In_Progress">En Progreso</option>
+                <option value="Completed">Completada</option>
               </TextField>
             </Box>
 
             <TextField
-              label="Description"
+              label="Descripción"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               multiline
               rows={3}
               fullWidth
-              placeholder="Describe the audit objectives and scope"
+              placeholder="Describe los objetivos y alcance de la auditoría"
               sx={{ mb: 3 }}
             />
 
             {/* Asignar activos a auditoría */}
             <Typography variant="h6" gutterBottom>
-              📦 Assign Assets to Audit
+              📦 Asignar Activos a la Auditoría
             </Typography>
 
             {assets.length === 0 ? (
               <Alert severity="warning" sx={{ mb: 2 }}>
-                No assets available. Create assets first to assign them to audits.
+                No hay activos disponibles. Crea activos primero para asignarlos a las auditorías.
               </Alert>
             ) : (
               <Paper sx={{ p: 2, mb: 3, maxHeight: 200, overflow: 'auto', bgcolor: '#fafafa' }}>
@@ -678,12 +708,12 @@ const AuditsContent: React.FC = () => {
                       style={{ marginRight: 8 }}
                     />
                     <Typography variant="body2" sx={{ flex: 1 }}>
-                      <strong>{asset.name}</strong> ({asset.type}) - {asset.status}
+                      <strong>{asset.name}</strong> ({asset.type === 'Hardware' ? 'Hardware' : asset.type === 'Software' ? 'Software' : 'Red'}) - {asset.status === 'Active' ? 'Activo' : asset.status === 'Inactive' ? 'Inactivo' : 'Mantenimiento'}
                     </Typography>
                   </Box>
                 ))}
                 <Typography variant="caption" color="textSecondary">
-                  Selected: {selectedAssets.length} assets
+                  Seleccionados: {selectedAssets.length} activos
                 </Typography>
               </Paper>
             )}
@@ -696,7 +726,7 @@ const AuditsContent: React.FC = () => {
                 sx={{ mr: 2 }}
                 disabled={!formData.name.trim()}
               >
-                {editingAudit ? 'Update Audit' : 'Create Audit'}
+                {editingAudit ? 'Actualizar Auditoría' : 'Crear Auditoría'}
               </Button>
               <Button
                 variant="outlined"
@@ -706,7 +736,7 @@ const AuditsContent: React.FC = () => {
                   resetForm();
                 }}
               >
-                Cancel
+                Cancelar
               </Button>
             </Box>
           </form>
@@ -716,16 +746,16 @@ const AuditsContent: React.FC = () => {
       {/* Lista de Auditorías */}
       <Paper sx={{ p: 2 }}>
         <Typography variant="h6" gutterBottom>
-          📋 Audits List ({audits.length} audits)
+          📋 Lista de Auditorías ({audits.length} auditorías)
         </Typography>
 
         {loading ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography>Loading audits...</Typography>
+            <Typography>Cargando auditorías...</Typography>
           </Box>
         ) : audits.length === 0 ? (
           <Alert severity="info">
-            No audits found. Create your first audit to begin security assessments!
+            No se encontraron auditorías. ¡Crea tu primera auditoría para comenzar las evaluaciones de seguridad!
           </Alert>
         ) : (
           <Box>
@@ -757,7 +787,7 @@ const AuditsContent: React.FC = () => {
                         }}
                       >
                         <Typography variant="caption" fontWeight="bold">
-                          {audit.status.replace('_', ' ')}
+                          {getStatusText(audit.status)}
                         </Typography>
                       </Box>
                     </Box>
@@ -769,8 +799,8 @@ const AuditsContent: React.FC = () => {
                     )}
 
                     <Typography variant="body2" color="textSecondary">
-                      <strong>Assets Assigned:</strong> {audit.assigned_assets?.length || 0} •{' '}
-                      <strong>Created:</strong> {new Date(audit.created_at).toLocaleDateString()}
+                      <strong>Activos Asignados:</strong> {audit.assets_count || 0} •{' '}
+                      <strong>Creada:</strong> {new Date(audit.created_at).toLocaleDateString()}
                     </Typography>
                   </Box>
 
@@ -780,7 +810,7 @@ const AuditsContent: React.FC = () => {
                       size="small"
                       onClick={() => handleEdit(audit)}
                     >
-                      ✏️ Edit
+                      ✏️ Editar
                     </Button>
                     <Button
                       variant="outlined"
@@ -788,7 +818,7 @@ const AuditsContent: React.FC = () => {
                       size="small"
                       onClick={() => handleDelete(audit)}
                     >
-                      🗑️ Delete
+                      🗑️ Eliminar
                     </Button>
                   </Box>
                 </Box>
@@ -801,7 +831,7 @@ const AuditsContent: React.FC = () => {
   );
 };
 
-// Componente de login (sin cambios)
+// Componente de login
 const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => {
   const [email, setEmail] = useState('admin@cyberlynx.com');
   const [password, setPassword] = useState('admin123');
@@ -825,10 +855,10 @@ const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => 
         localStorage.setItem('user', JSON.stringify(data.user));
         onLogin(data.user);
       } else {
-        alert(data.error || 'Login failed');
+        alert(data.error || 'Error en el inicio de sesión');
       }
     } catch (error) {
-      alert('Network error - Make sure backend is running');
+      alert('Error de red - Asegúrate de que el backend esté ejecutándose');
     } finally {
       setLoading(false);
     }
@@ -847,13 +877,13 @@ const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => 
           CyberLynx
         </Typography>
         <Typography variant="subtitle1" color="textSecondary" align="center" gutterBottom>
-          Digital Asset Audit System
+          Sistema de Auditoría de Activos Digitales
         </Typography>
 
         <form onSubmit={handleSubmit}>
           <TextField
             fullWidth
-            label="Email"
+            label="Correo Electrónico"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -864,7 +894,7 @@ const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => 
 
           <TextField
             fullWidth
-            label="Password"
+            label="Contraseña"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -880,12 +910,12 @@ const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => 
             sx={{ mt: 3, mb: 2, py: 1.5 }}
             disabled={loading}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </Button>
         </form>
 
         <Typography variant="caption" color="textSecondary" align="center" display="block">
-          Demo credentials are pre-filled
+          Las credenciales de demostración están pre-cargadas
         </Typography>
       </Paper>
     </Box>

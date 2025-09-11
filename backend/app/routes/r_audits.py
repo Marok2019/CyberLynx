@@ -74,23 +74,26 @@ def update_audit(audit_id):
 @audits_bp.route('', methods=['POST'])
 @jwt_required()
 def create_audit():
-    """US-004: Create basic audit - Versión con una sola transacción"""
+    """US-004: Create basic audit with asset assignment"""
     from app.models.audit import Audit
     from app.models.asset import Asset
     
     try:
         data = request.get_json()
+        print(f"🔍 DEBUG - Datos recibidos: {data}")  # Debug temporal
         
         if not data or not data.get('name'):
             return jsonify({'error': 'Audit name is required'}), 400
         
-        # Validar assets ANTES de crear la auditoría
+        # Validar y obtener assets
         asset_ids = data.get('asset_ids', [])
+        print(f"🔍 DEBUG - Asset IDs recibidos: {asset_ids}")  # Debug temporal
         assets = []
         
         if asset_ids:
             assets = Asset.query.filter(Asset.id.in_(asset_ids)).all()
             found_ids = [asset.id for asset in assets]
+            print(f"🔍 DEBUG - Assets encontrados: {found_ids}")  # Debug temporal
             
             if len(assets) != len(asset_ids):
                 missing_ids = [aid for aid in asset_ids if aid not in found_ids]
@@ -104,18 +107,25 @@ def create_audit():
             created_by=int(get_jwt_identity())
         )
         
-        # Asignar assets ANTES del commit
-        audit.assets = assets  # ← Asignación directa
+        # CRÍTICO: Asignar assets usando la relación many-to-many
+        audit.assets = assets
+        print(f"🔍 DEBUG - Assets asignados a auditoría: {len(assets)}")  # Debug temporal
         
         db.session.add(audit)
-        db.session.commit()  # ← Un solo commit para todo
+        db.session.commit()
+        
+        # Verificar que se guardaron correctamente
+        audit_created = Audit.query.get(audit.id)
+        print(f"🔍 DEBUG - Assets guardados en BD: {len(audit_created.assets)}")  # Debug temporal
         
         return jsonify({
             'message': 'Audit created successfully',
-            'audit': audit.to_dict()
+            'audit': audit.to_dict(),
+            'assets_assigned': len(audit.assets)  # Info adicional
         }), 201
         
     except Exception as e:
+        print(f"🚨 ERROR creando auditoría: {str(e)}")  # Debug temporal
         db.session.rollback()
         return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 

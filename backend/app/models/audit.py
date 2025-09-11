@@ -39,7 +39,8 @@ class Audit(db.Model):
             'started_at': self.started_at.isoformat() if self.started_at else None,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'created_by': self.created_by,
-            'assets_count': len(self.assets)
+            'assets_count': len(self.assets),
+            'assigned_assets': [asset.id for asset in self.assets]  # ← AÑADIR: IDs de assets asignados
         }
     
     @staticmethod
