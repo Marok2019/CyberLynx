@@ -252,10 +252,10 @@ const AssetsContent: React.FC = () => {
         <Typography variant="h6" gutterBottom>
           🔍 Buscar y Filtrar Activos (US-002)
         </Typography>
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', md: 'row' }, 
-          gap: 2, 
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 2,
           mb: 2,
           alignItems: { xs: 'stretch', md: 'flex-end' }
         }}>
@@ -274,6 +274,7 @@ const AssetsContent: React.FC = () => {
             value={filters.type}
             onChange={(e) => handleFilterChange('type', e.target.value)}
             SelectProps={{ native: true }}
+            InputLabelProps={{ shrink: true }}
             size="small"
             sx={{ flex: 1, minWidth: 150 }}
           >
@@ -289,6 +290,7 @@ const AssetsContent: React.FC = () => {
             value={filters.status}
             onChange={(e) => handleFilterChange('status', e.target.value)}
             SelectProps={{ native: true }}
+            InputLabelProps={{ shrink: true }}
             size="small"
             sx={{ flex: 1, minWidth: 150 }}
           >
@@ -299,8 +301,8 @@ const AssetsContent: React.FC = () => {
           </TextField>
         </Box>
 
-        <Box sx={{ 
-          display: 'flex', 
+        <Box sx={{
+          display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           gap: 1,
           alignItems: { xs: 'stretch', sm: 'center' }
@@ -321,10 +323,10 @@ const AssetsContent: React.FC = () => {
           >
             Limpiar Filtros
           </Button>
-          <Typography 
-            variant="caption" 
-            sx={{ 
-              ml: { xs: 0, sm: 2 }, 
+          <Typography
+            variant="caption"
+            sx={{
+              ml: { xs: 0, sm: 2 },
               mt: { xs: 1, sm: 0 },
               alignSelf: 'center',
               color: 'text.secondary'
@@ -556,7 +558,7 @@ const AuditsContent: React.FC = () => {
         setEditingAudit(null);
         resetForm();
         loadAudits();
-        const message = editingAudit 
+        const message = editingAudit
           ? `Auditoría actualizada exitosamente. Activos asignados: ${responseData.assets_assigned || 0}`
           : `Auditoría creada exitosamente. Activos asignados: ${responseData.assets_assigned || 0}`;
         alert(message);
@@ -585,7 +587,7 @@ const AuditsContent: React.FC = () => {
         }
       });
       const data = await response.json();
-      
+
       if (response.ok && data.assets) {
         const assignedAssetIds = data.assets.map((asset: any) => asset.id);
         setSelectedAssets(assignedAssetIds);
@@ -635,7 +637,7 @@ const AuditsContent: React.FC = () => {
       const newSelection = prev.includes(assetId)
         ? prev.filter(id => id !== assetId)
         : [...prev, assetId];
-      
+
       console.log('🔄 Activos seleccionados:', newSelection); // Debug
       return newSelection;
     });
