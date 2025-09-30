@@ -19,7 +19,7 @@ def create_default_user():
     
     if not existing_admin:
         admin = User(
-            name='Administrator',  # ← CAMBIO: name en lugar de nombre
+            name='Administrator',
             email='admin@cyberlynx.com',
             role='admin'
         )
@@ -31,10 +31,26 @@ def create_default_user():
     else:
         print('👤 Admin user already exists')
 
+def seed_checklists():
+    """Seed checklist templates"""
+    from app.seeds.seed_checklists import seed_checklist_templates
+    seed_checklist_templates()
+
 if __name__ == '__main__':
     with app.app_context():
+        # 1. Crear todas las tablas
         db.create_all()
+        print('✅ Database tables created')
+        
+        # 2. Crear usuario admin
         create_default_user()
+        
+        # 3. Cargar templates de checklist (NUEVO)
+        try:
+            seed_checklists()
+        except Exception as e:
+            print(f'⚠️  Error seeding checklists: {str(e)}')
+        
         print('🚀 Server started at http://127.0.0.1:5000')
     
     app.run(host='127.0.0.1', port=5000, debug=True)

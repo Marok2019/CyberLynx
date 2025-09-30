@@ -199,3 +199,186 @@ def delete_audit(audit_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Error deleting audit: {str(e)}'}), 500
+    
+    # ========== CHECKLIST ENDPOINTS (US-005) ==========
+
+@audits_bp.route('/<int:audit_id>/checklist/start', methods=['POST'])
+@jwt_required()
+def start_audit_checklist(audit_id):
+    """US-005: Iniciar checklist en una auditoría"""
+    from app.models.audit import Audit
+    from app.models.checklist import ChecklistTemplate, AuditChecklist
+    
+    try:
+        audit = Audit.query.get_or_404(audit_id)
+        data = request.get_json()
+        
+        if not data or not data.get('template_id'):
+            return jsonify({'error': 'template_id is required'}), 400
+        
+        template_id = data.get('template_id')
+        template = ChecklistTemplate.query.get_or_404(template_id)
+        
+        # Verificar si ya existe un checklist activo para este template
+        existing = AuditChecklist.query.filter_by(
+            audit_id=audit_id,
+            template_id=template_id,
+            status='In_Progress'
+        ).first()
+        
+        if existing:
+            return jsonify({'error': 'Checklist already in progress for this template'}), 400
+        
+        # Crear nueva instancia de checklist
+        audit_checklist = AuditChecklist(
+            audit_id=audit_id,
+            template_id=template_id,
+            status='In_Progress'
+        )
+        
+        db.session.add(audit_checklist)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Checklist started successfully',
+            'checklist': audit_checklist.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Error starting checklist: {str(e)}'}), 500
+
+
+@audits_bp.route('/<int:audit_id>/checklist/<int:checklist_id>/answer', methods=['POST'])
+@jwt_required()
+def answer_checklist_question(audit_id, checklist_id):
+    """US-005: Responder pregunta del checklist"""
+    from app.models.checklist import AuditChecklist, ChecklistResponse, ChecklistQuestion
+    
+    try:
+        audit_checklist = AuditChecklist.query.get_or_404(checklist_id)
+        
+        if audit_checklist.audit_id != audit_id:
+            return jsonify({'error': 'Checklist does not belong to this audit'}), 400
+        
+        if audit_checklist.status == 'Completed':
+            return jsonify({'error': 'Checklist already completed'}), 400
+        
+        data = request.get_json()
+        
+        if not data or not data.get('question_id') or not data.get('answer'):
+            return jsonify({'error': 'question_id and answer are required'}), 400
+        
+        question_id = data.get('question_id')
+        answer = data.get('answer')
+        notes = data.get('notes', '')
+        
+        # Validar respuesta
+        if answer not in ChecklistResponse.get_valid_answers():
+            return jsonify({'error': f'Answer must be one of: {", ".join(ChecklistResponse.get_valid_answers())}'}), 400
+        
+        # Verificar que la pregunta pertenece al template
+        question = ChecklistQuestion.query.get_or_404(question_id)
+        if question.template_id != audit_checklist.template_id:
+            return jsonify({'error': 'Question does not belong to this checklist template'}), 400
+        
+        # Verificar si ya existe respuesta
+        existing_response = ChecklistResponse.query.filter_by(
+            audit_checklist_id=checklist_id,
+            question_id=question_id
+        ).first()
+        
+        if existing_response:
+            # Actualizar respuesta existente
+            existing_response.answer = answer
+            existing_response.notes = notes
+            existing_response.answered_at = datetime.utcnow()
+            existing_response.answered_by = int(get_jwt_identity())
+        else:
+            # Crear nueva respuesta
+            response = ChecklistResponse(
+                audit_checklist_id=checklist_id,
+                question_id=question_id,
+                answer=answer,
+                notes=notes,
+                answered_by=int(get_jwt_identity())
+            )
+            db.session.add(response)
+        
+        db.session.commit()
+        
+        # Verificar si se completó el checklist
+        total_questions = audit_checklist.template.questions.count()
+        answered_questions = audit_checklist.responses.count()
+        
+        if answered_questions >= total_questions and audit_checklist.status == 'In_Progress':
+            audit_checklist.status = 'Completed'
+            audit_checklist.completed_at = datetime.utcnow()
+            db.session.commit()
+        
+        return jsonify({
+            'message': 'Answer saved successfully',
+            'checklist': audit_checklist.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Error saving answer: {str(e)}'}), 500
+
+
+@audits_bp.route('/<int:audit_id>/checklist/<int:checklist_id>', methods=['GET'])
+@jwt_required()
+def get_audit_checklist(audit_id, checklist_id):
+    """US-005: Obtener checklist completo con respuestas"""
+    from app.models.checklist import AuditChecklist
+    
+    try:
+        audit_checklist = AuditChecklist.query.get_or_404(checklist_id)
+        
+        if audit_checklist.audit_id != audit_id:
+            return jsonify({'error': 'Checklist does not belong to this audit'}), 400
+        
+        # Obtener todas las preguntas con sus respuestas
+        questions = audit_checklist.template.questions.order_by('order').all()
+        
+        questions_with_responses = []
+        for question in questions:
+            response = audit_checklist.responses.filter_by(question_id=question.id).first()
+            
+            questions_with_responses.append({
+                'question': question.to_dict(),
+                'response': response.to_dict() if response else None
+            })
+        
+        return jsonify({
+            'checklist': audit_checklist.to_dict(),
+            'template': audit_checklist.template.to_dict(),
+            'questions_with_responses': questions_with_responses
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Error getting checklist: {str(e)}'}), 500
+
+
+@audits_bp.route('/<int:audit_id>/checklists', methods=['GET'])
+@jwt_required()
+def list_audit_checklists(audit_id):
+    """US-005: Listar todos los checklists de una auditoría"""
+    from app.models.audit import Audit
+    from app.models.checklist import AuditChecklist
+    
+    try:
+        audit = Audit.query.get_or_404(audit_id)
+        
+        checklists = AuditChecklist.query.filter_by(audit_id=audit_id).order_by(AuditChecklist.started_at.desc()).all()
+        
+        return jsonify({
+            'audit': audit.to_dict(),
+            'checklists': [checklist.to_dict() for checklist in checklists],
+            'total': len(checklists)
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Error listing checklists: {str(e)}'}), 500
+    
+    
