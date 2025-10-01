@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
   CssBaseline, Box, Paper, TextField, Button, Typography,
   AppBar, Toolbar, Tabs, Tab, Alert, Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
 import { User } from './types/User';
-import ChecklistTemplateSelector from './components/ChecklistTemplateSelector';
-import ChecklistExecutor from './components/ChecklistExecutor';
-import ChecklistSummary from './components/ChecklistSummary';
+import AuditChecklistPage from './pages/AuditChecklistPage';
 
 const theme = createTheme({
   palette: {
@@ -18,7 +17,6 @@ const theme = createTheme({
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [currentTab, setCurrentTab] = useState(0);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -37,189 +35,70 @@ function App() {
     setUser(null);
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setCurrentTab(newValue);
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-
-      {user ? (
-        <Box sx={{ flexGrow: 1 }}>
-          <AppBar position="static">
-            <Toolbar>
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                CyberLynx - Bienvenido {user.name}
-              </Typography>
-              <Button color="inherit" onClick={handleLogout}>
-                Cerrar Sesión
-              </Button>
-            </Toolbar>
-          </AppBar>
-
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={currentTab} onChange={handleTabChange}>
-              <Tab label="Panel Principal" />
-              <Tab label="Activos" />
-              <Tab label="Auditorías" />
-              <Tab label="Checklists" /> {/* ← NUEVO TAB US-005 */}
-            </Tabs>
-          </Box>
-
-          <Box sx={{ p: 3 }}>
-            {currentTab === 0 && <DashboardContent />}
-            {currentTab === 1 && <AssetsContent />}
-            {currentTab === 2 && <AuditsContent />}
-            {currentTab === 3 && <ChecklistsContent />} {/* ← NUEVO CONTENIDO US-005 */}
-          </Box>
-        </Box>
-      ) : (
-        <LoginForm onLogin={handleLogin} />
-      )}
+      <Router>
+        {user ? (
+          <AuthenticatedApp user={user} onLogout={handleLogout} />
+        ) : (
+          <LoginForm onLogin={handleLogin} />
+        )}
+      </Router>
     </ThemeProvider>
   );
 }
 
-// ========== NUEVO COMPONENTE US-005 ==========
-const ChecklistsContent: React.FC = () => {
-  const [audits, setAudits] = useState<any[]>([]);
-  const [selectedAudit, setSelectedAudit] = useState<any>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
-  const [currentChecklist, setCurrentChecklist] = useState<any>(null);
-  const [showSummary, setShowSummary] = useState(false);
+const AuthenticatedApp: React.FC<{ user: User; onLogout: () => void }> = ({ user, onLogout }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  useEffect(() => {
-    loadAudits();
-  }, []);
-
-  const loadAudits = async () => {
-    try {
-      const response = await fetch('http://127.0.0.1:5000/api/audits', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const data = await response.json();
-      setAudits(data.audits || []);
-    } catch (error) {
-      console.error('Error cargando auditorías:', error);
-    }
+  const getTabValue = () => {
+    if (location.pathname.startsWith('/audits/') && location.pathname.includes('/checklists')) return 2;
+    if (location.pathname === '/audits') return 2;
+    if (location.pathname === '/assets') return 1;
+    return 0;
   };
 
-  const handleAuditSelect = (audit: any) => {
-    setSelectedAudit(audit);
-    setSelectedTemplate(null);
-    setCurrentChecklist(null);
-    setShowSummary(false);
-  };
-
-  const handleTemplateSelect = (templateId: number) => {
-    setSelectedTemplate(templateId);
-    setShowSummary(false);
-  };
-
-  const handleChecklistStarted = (checklist: any) => {
-    setCurrentChecklist(checklist);
-    setSelectedTemplate(null);
-  };
-
-  const handleChecklistCompleted = () => {
-    setShowSummary(true);
-  };
-
-  const handleBackToSelection = () => {
-    setSelectedAudit(null);
-    setSelectedTemplate(null);
-    setCurrentChecklist(null);
-    setShowSummary(false);
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    const paths = ['/', '/assets', '/audits'];
+    navigate(paths[newValue]);
   };
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        📋 Sistema de Checklists (US-005)
-      </Typography>
-
-      {/* Paso 1: Seleccionar Auditoría */}
-      {!selectedAudit && (
-        <Box>
-          <Typography variant="h6" gutterBottom>
-            Selecciona una Auditoría
+    <Box sx={{ flexGrow: 1 }}>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            CyberLynx - Bienvenido {user.name}
           </Typography>
-          {audits.length === 0 ? (
-            <Alert severity="info">
-              No hay auditorías disponibles. Crea una auditoría primero en la pestaña "Auditorías".
-            </Alert>
-          ) : (
-            <Box sx={{ display: 'grid', gap: 2 }}>
-              {audits.map((audit) => (
-                <Paper
-                  key={audit.id}
-                  sx={{
-                    p: 2,
-                    cursor: 'pointer',
-                    border: '2px solid transparent',
-                    '&:hover': {
-                      border: '2px solid #1976d2',
-                      bgcolor: '#f5f5f5'
-                    }
-                  }}
-                  onClick={() => handleAuditSelect(audit)}
-                >
-                  <Typography variant="h6" color="primary">
-                    {audit.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Estado: {audit.status} • Activos: {audit.assets_count}
-                  </Typography>
-                </Paper>
-              ))}
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {/* Paso 2: Seleccionar Template o Ejecutar Checklist */}
-      {selectedAudit && !currentChecklist && !selectedTemplate && (
-        <Box>
-          <Button onClick={handleBackToSelection} sx={{ mb: 2 }}>
-            ← Volver a Auditorías
+          <Button color="inherit" onClick={onLogout}>
+            Cerrar Sesión
           </Button>
-          <ChecklistTemplateSelector
-            auditId={selectedAudit.id}
-            onTemplateSelect={handleTemplateSelect}
-            onChecklistStarted={handleChecklistStarted}
-          />
-        </Box>
-      )}
+        </Toolbar>
+      </AppBar>
 
-      {/* Paso 3: Ejecutar Checklist */}
-      {selectedAudit && currentChecklist && !showSummary && (
-        <Box>
-          <Button onClick={handleBackToSelection} sx={{ mb: 2 }}>
-            ← Volver a Auditorías
-          </Button>
-          <ChecklistExecutor
-            auditId={selectedAudit.id}
-            checklistId={currentChecklist.id}
-            onComplete={handleChecklistCompleted}
-          />
-        </Box>
-      )}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={getTabValue()} onChange={handleTabChange}>
+          <Tab label="Panel Principal" />
+          <Tab label="Activos" />
+          <Tab label="Auditorías" />
+        </Tabs>
+      </Box>
 
-      {/* Paso 4: Ver Resumen */}
-      {selectedAudit && currentChecklist && showSummary && (
-        <Box>
-          <Button onClick={handleBackToSelection} sx={{ mb: 2 }}>
-            ← Volver a Auditorías
-          </Button>
-          <ChecklistSummary checklistId={currentChecklist.id} />
-        </Box>
-      )}
-    </Paper>
+      <Box sx={{ p: 3 }}>
+        <Routes>
+          <Route path="/" element={<DashboardContent />} />
+          <Route path="/assets" element={<AssetsContent />} />
+          <Route path="/audits" element={<AuditsContent />} />
+          <Route path="/audits/:auditId/checklists" element={<AuditChecklistPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Box>
+    </Box>
   );
 };
+
 
 // Componentes de contenido
 const DashboardContent: React.FC = () => (
@@ -608,6 +487,7 @@ const AssetsContent: React.FC = () => {
 };
 
 const AuditsContent: React.FC = () => {
+  const navigate = useNavigate();
   const [audits, setAudits] = useState<any[]>([]);
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -974,6 +854,13 @@ const AuditsContent: React.FC = () => {
                   </Box>
 
                   <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => navigate(`/audits/${audit.id}/checklists`)}
+                    >
+                      📋 Checklists
+                    </Button>
                     <Button
                       variant="outlined"
                       size="small"
