@@ -4,7 +4,7 @@ import {
     CardContent,
     Typography,
     Box,
-    Grid,
+    Stack,
     LinearProgress,
     Chip,
     Table,
@@ -72,9 +72,13 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
 
     return (
         <Box>
-            {/* Estadísticas principales */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
-                <Grid item xs={12} md={3}>
+            {/* Main Statistics */}
+            <Stack
+                direction={{ xs: 'column', md: 'row' }}
+                spacing={3}
+                sx={{ mb: 3 }}
+            >
+                <Box sx={{ flex: 1 }}>
                     <Card>
                         <CardContent>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -86,9 +90,9 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
                             </Typography>
                         </CardContent>
                     </Card>
-                </Grid>
+                </Box>
 
-                <Grid item xs={12} md={3}>
+                <Box sx={{ flex: 1 }}>
                     <Card>
                         <CardContent>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -100,9 +104,9 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
                             </Typography>
                         </CardContent>
                     </Card>
-                </Grid>
+                </Box>
 
-                <Grid item xs={12} md={3}>
+                <Box sx={{ flex: 1 }}>
                     <Card>
                         <CardContent>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -114,9 +118,9 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
                             </Typography>
                         </CardContent>
                     </Card>
-                </Grid>
+                </Box>
 
-                <Grid item xs={12} md={3}>
+                <Box sx={{ flex: 1 }}>
                     <Card>
                         <CardContent>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -128,10 +132,10 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
                             </Typography>
                         </CardContent>
                     </Card>
-                </Grid>
-            </Grid>
+                </Box>
+            </Stack>
 
-            {/* Barra de progreso general */}
+            {/* Overall Progress Bar */}
             <Card sx={{ mb: 3 }}>
                 <CardContent>
                     <Typography variant="h6" gutterBottom>
@@ -152,7 +156,7 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
                 </CardContent>
             </Card>
 
-            {/* Desglose por severidad */}
+            {/* Breakdown by Severity */}
             <Card>
                 <CardContent>
                     <Typography variant="h6" gutterBottom>
