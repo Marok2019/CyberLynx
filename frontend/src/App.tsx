@@ -5,6 +5,9 @@ import {
   AppBar, Toolbar, Tabs, Tab, Alert, Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
 import { User } from './types/User';
+import ChecklistTemplateSelector from './components/ChecklistTemplateSelector';
+import ChecklistExecutor from './components/ChecklistExecutor';
+import ChecklistSummary from './components/ChecklistSummary';
 
 const theme = createTheme({
   palette: {
@@ -18,7 +21,6 @@ function App() {
   const [currentTab, setCurrentTab] = useState(0);
 
   useEffect(() => {
-    // Verificar si hay usuario guardado
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
@@ -45,7 +47,6 @@ function App() {
 
       {user ? (
         <Box sx={{ flexGrow: 1 }}>
-          {/* Navigation Bar */}
           <AppBar position="static">
             <Toolbar>
               <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -57,20 +58,20 @@ function App() {
             </Toolbar>
           </AppBar>
 
-          {/* Tab Navigation */}
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={currentTab} onChange={handleTabChange}>
               <Tab label="Panel Principal" />
               <Tab label="Activos" />
               <Tab label="Auditorías" />
+              <Tab label="Checklists" /> {/* ← NUEVO TAB US-005 */}
             </Tabs>
           </Box>
 
-          {/* Tab Content */}
           <Box sx={{ p: 3 }}>
             {currentTab === 0 && <DashboardContent />}
             {currentTab === 1 && <AssetsContent />}
             {currentTab === 2 && <AuditsContent />}
+            {currentTab === 3 && <ChecklistsContent />} {/* ← NUEVO CONTENIDO US-005 */}
           </Box>
         </Box>
       ) : (
@@ -79,6 +80,146 @@ function App() {
     </ThemeProvider>
   );
 }
+
+// ========== NUEVO COMPONENTE US-005 ==========
+const ChecklistsContent: React.FC = () => {
+  const [audits, setAudits] = useState<any[]>([]);
+  const [selectedAudit, setSelectedAudit] = useState<any>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
+  const [currentChecklist, setCurrentChecklist] = useState<any>(null);
+  const [showSummary, setShowSummary] = useState(false);
+
+  useEffect(() => {
+    loadAudits();
+  }, []);
+
+  const loadAudits = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:5000/api/audits', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      setAudits(data.audits || []);
+    } catch (error) {
+      console.error('Error cargando auditorías:', error);
+    }
+  };
+
+  const handleAuditSelect = (audit: any) => {
+    setSelectedAudit(audit);
+    setSelectedTemplate(null);
+    setCurrentChecklist(null);
+    setShowSummary(false);
+  };
+
+  const handleTemplateSelect = (templateId: number) => {
+    setSelectedTemplate(templateId);
+    setShowSummary(false);
+  };
+
+  const handleChecklistStarted = (checklist: any) => {
+    setCurrentChecklist(checklist);
+    setSelectedTemplate(null);
+  };
+
+  const handleChecklistCompleted = () => {
+    setShowSummary(true);
+  };
+
+  const handleBackToSelection = () => {
+    setSelectedAudit(null);
+    setSelectedTemplate(null);
+    setCurrentChecklist(null);
+    setShowSummary(false);
+  };
+
+  return (
+    <Paper sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        📋 Sistema de Checklists (US-005)
+      </Typography>
+
+      {/* Paso 1: Seleccionar Auditoría */}
+      {!selectedAudit && (
+        <Box>
+          <Typography variant="h6" gutterBottom>
+            Selecciona una Auditoría
+          </Typography>
+          {audits.length === 0 ? (
+            <Alert severity="info">
+              No hay auditorías disponibles. Crea una auditoría primero en la pestaña "Auditorías".
+            </Alert>
+          ) : (
+            <Box sx={{ display: 'grid', gap: 2 }}>
+              {audits.map((audit) => (
+                <Paper
+                  key={audit.id}
+                  sx={{
+                    p: 2,
+                    cursor: 'pointer',
+                    border: '2px solid transparent',
+                    '&:hover': {
+                      border: '2px solid #1976d2',
+                      bgcolor: '#f5f5f5'
+                    }
+                  }}
+                  onClick={() => handleAuditSelect(audit)}
+                >
+                  <Typography variant="h6" color="primary">
+                    {audit.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Estado: {audit.status} • Activos: {audit.assets_count}
+                  </Typography>
+                </Paper>
+              ))}
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* Paso 2: Seleccionar Template o Ejecutar Checklist */}
+      {selectedAudit && !currentChecklist && !selectedTemplate && (
+        <Box>
+          <Button onClick={handleBackToSelection} sx={{ mb: 2 }}>
+            ← Volver a Auditorías
+          </Button>
+          <ChecklistTemplateSelector
+            auditId={selectedAudit.id}
+            onTemplateSelect={handleTemplateSelect}
+            onChecklistStarted={handleChecklistStarted}
+          />
+        </Box>
+      )}
+
+      {/* Paso 3: Ejecutar Checklist */}
+      {selectedAudit && currentChecklist && !showSummary && (
+        <Box>
+          <Button onClick={handleBackToSelection} sx={{ mb: 2 }}>
+            ← Volver a Auditorías
+          </Button>
+          <ChecklistExecutor
+            auditId={selectedAudit.id}
+            checklistId={currentChecklist.id}
+            onComplete={handleChecklistCompleted}
+          />
+        </Box>
+      )}
+
+      {/* Paso 4: Ver Resumen */}
+      {selectedAudit && currentChecklist && showSummary && (
+        <Box>
+          <Button onClick={handleBackToSelection} sx={{ mb: 2 }}>
+            ← Volver a Auditorías
+          </Button>
+          <ChecklistSummary checklistId={currentChecklist.id} />
+        </Box>
+      )}
+    </Paper>
+  );
+};
 
 // Componentes de contenido
 const DashboardContent: React.FC = () => (
