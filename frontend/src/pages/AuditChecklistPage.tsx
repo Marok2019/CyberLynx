@@ -25,11 +25,14 @@ import ChecklistSummary from '../components/ChecklistSummary';
 import { checklistService } from '../services/checklistService';
 import { auditService } from '../services/auditService';
 import { AuditChecklist, QuestionWithResponse } from '../types/Checklist';
+import { Assessment as ReportIcon } from '@mui/icons-material';
+import { Menu, MenuItem } from '@mui/material';
 
 const AuditChecklistPage: React.FC = () => {
     const { auditId } = useParams<{ auditId: string }>();
     const navigate = useNavigate();
-
+    const [reportMenuAnchor, setReportMenuAnchor] = useState<null | HTMLElement>(null);
+    const [generatingReport, setGeneratingReport] = useState(false);
     const [auditName, setAuditName] = useState('');
     const [checklists, setChecklists] = useState<AuditChecklist[]>([]);
     const [selectedChecklist, setSelectedChecklist] = useState<AuditChecklist | null>(null);
@@ -44,6 +47,59 @@ const AuditChecklistPage: React.FC = () => {
             loadAuditAndChecklists();
         }
     }, [auditId]);
+
+    const handleGenerateReport = async (format: 'pdf' | 'xlsx' | 'csv') => {
+        setReportMenuAnchor(null);
+        setGeneratingReport(true);
+
+        try {
+            const response = await fetch(
+                `http://127.0.0.1:5000/api/reports/audits/${auditId}/report?format=${format}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error generating report');
+            }
+
+            // Descargar archivo
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+
+            // Obtener nombre de archivo del header Content-Disposition o generar uno
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = `CyberLynx_Audit_Report.${format}`;
+
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            alert(`Report generated successfully: ${filename}`);
+
+        } catch (err: any) {
+            console.error('Error generating report:', err);
+            setError(err.message || 'Error generating report');
+        } finally {
+            setGeneratingReport(false);
+        }
+    };
+
 
     const loadAuditAndChecklists = async () => {
         try {
@@ -133,13 +189,43 @@ const AuditChecklistPage: React.FC = () => {
                         {auditName}
                     </Typography>
                 </Box>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => setTemplateSelectorOpen(true)}
-                >
-                    Start New Checklist
-                </Button>
+
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    {/* Botón de Generar Reporte */}
+                    <Button
+                        variant="outlined"
+                        startIcon={<ReportIcon />}
+                        onClick={(e) => setReportMenuAnchor(e.currentTarget)}
+                        disabled={checklists.length === 0 || generatingReport}
+                    >
+                        {generatingReport ? 'Generating...' : 'Generate Report'}
+                    </Button>
+
+                    {/* Menú de formatos */}
+                    <Menu
+                        anchorEl={reportMenuAnchor}
+                        open={Boolean(reportMenuAnchor)}
+                        onClose={() => setReportMenuAnchor(null)}
+                    >
+                        <MenuItem onClick={() => handleGenerateReport('pdf')}>
+                            📄 PDF Report
+                        </MenuItem>
+                        <MenuItem onClick={() => handleGenerateReport('xlsx')}>
+                            📊 Excel Report (XLSX)
+                        </MenuItem>
+                        <MenuItem onClick={() => handleGenerateReport('csv')}>
+                            📋 CSV Export
+                        </MenuItem>
+                    </Menu>
+
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => setTemplateSelectorOpen(true)}
+                    >
+                        Start New Checklist
+                    </Button>
+                </Box>
             </Box>
 
             {error && (
