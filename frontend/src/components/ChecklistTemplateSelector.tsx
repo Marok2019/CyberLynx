@@ -54,6 +54,7 @@ const getCategoryColor = (category: string) => {
     }
 };
 
+// Componente: Selector de plantillas de checklist (US-005)
 const ChecklistTemplateSelector: React.FC<ChecklistTemplateSelectorProps> = ({
     open,
     onClose,
@@ -78,7 +79,7 @@ const ChecklistTemplateSelector: React.FC<ChecklistTemplateSelectorProps> = ({
             const response = await checklistService.getTemplates();
             setTemplates(response.templates);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error loading templates');
+            setError(err.response?.data?.error || 'Error al cargar plantillas');
         } finally {
             setLoading(false);
         }
@@ -93,7 +94,7 @@ const ChecklistTemplateSelector: React.FC<ChecklistTemplateSelectorProps> = ({
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-            <DialogTitle>Select Checklist Template</DialogTitle>
+            <DialogTitle>Seleccionar Plantilla de Checklist</DialogTitle>
             <DialogContent>
                 {loading && (
                     <Box display="flex" justifyContent="center" py={4}>
@@ -123,7 +124,7 @@ const ChecklistTemplateSelector: React.FC<ChecklistTemplateSelectorProps> = ({
                                         />
                                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                             <Chip
-                                                label={`${template.questions_count} questions`}
+                                                label={`${template.questions_count} preguntas`}
                                                 size="small"
                                                 color={getCategoryColor(template.category) as any}
                                             />
@@ -137,18 +138,18 @@ const ChecklistTemplateSelector: React.FC<ChecklistTemplateSelectorProps> = ({
 
                 {!loading && !error && templates.length === 0 && (
                     <Typography color="text.secondary" align="center" py={4}>
-                        No templates available
+                        No hay plantillas disponibles
                     </Typography>
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={onClose}>Cancel</Button>
+                <Button onClick={onClose}>Cancelar</Button>
                 <Button
                     onClick={handleSelect}
                     variant="contained"
                     disabled={!selectedTemplate}
                 >
-                    Start Checklist
+                    Iniciar Checklist
                 </Button>
             </DialogActions>
         </Dialog>

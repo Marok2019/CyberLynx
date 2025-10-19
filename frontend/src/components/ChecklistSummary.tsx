@@ -30,6 +30,7 @@ interface ChecklistSummaryProps {
     checklistId: number;
 }
 
+// Componente: Resumen estadístico de checklist (US-005)
 const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
     const [summary, setSummary] = useState<ChecklistSummaryType | null>(null);
     const [loading, setLoading] = useState(true);
@@ -46,7 +47,7 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
             const data = await checklistService.getChecklistSummary(checklistId);
             setSummary(data);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error loading summary');
+            setError(err.response?.data?.error || 'Error al cargar resumen');
         } finally {
             setLoading(false);
         }
@@ -63,7 +64,7 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
     if (error || !summary) {
         return (
             <Alert severity="error">
-                {error || 'Failed to load summary'}
+                {error || 'Error al cargar resumen'}
             </Alert>
         );
     }
@@ -86,7 +87,7 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
                                 <Typography variant="h6">{stats.yes_count}</Typography>
                             </Box>
                             <Typography variant="body2" color="text.secondary">
-                                Compliant
+                                Conforme
                             </Typography>
                         </CardContent>
                     </Card>
@@ -100,7 +101,7 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
                                 <Typography variant="h6">{stats.no_count}</Typography>
                             </Box>
                             <Typography variant="body2" color="text.secondary">
-                                Non-Compliant
+                                No Conforme
                             </Typography>
                         </CardContent>
                     </Card>
@@ -114,7 +115,7 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
                                 <Typography variant="h6">{stats.na_count}</Typography>
                             </Box>
                             <Typography variant="body2" color="text.secondary">
-                                Not Applicable
+                                No Aplica
                             </Typography>
                         </CardContent>
                     </Card>
@@ -128,7 +129,7 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
                                 <Typography variant="h6">{stats.compliance_rate}%</Typography>
                             </Box>
                             <Typography variant="body2" color="text.secondary">
-                                Compliance Rate
+                                Tasa de Cumplimiento
                             </Typography>
                         </CardContent>
                     </Card>
@@ -139,7 +140,7 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
             <Card sx={{ mb: 3 }}>
                 <CardContent>
                     <Typography variant="h6" gutterBottom>
-                        Overall Progress
+                        Progreso General
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Box sx={{ flexGrow: 1 }}>
@@ -160,18 +161,18 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
             <Card>
                 <CardContent>
                     <Typography variant="h6" gutterBottom>
-                        Breakdown by Severity
+                        Desglose por Severidad
                     </Typography>
                     <TableContainer component={Paper} variant="outlined">
                         <Table>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell>Severity</TableCell>
+                                    <TableCell>Severidad</TableCell>
                                     <TableCell align="center">Total</TableCell>
                                     <TableCell align="center">
                                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                                             <CheckCircle fontSize="small" color="success" />
-                                            Yes
+                                            Sí
                                         </Box>
                                     </TableCell>
                                     <TableCell align="center">
@@ -186,7 +187,7 @@ const ChecklistSummary: React.FC<ChecklistSummaryProps> = ({ checklistId }) => {
                                             N/A
                                         </Box>
                                     </TableCell>
-                                    <TableCell align="center">Unanswered</TableCell>
+                                    <TableCell align="center">Sin Responder</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

@@ -28,6 +28,7 @@ import { AuditChecklist, QuestionWithResponse } from '../types/Checklist';
 import { Assessment as ReportIcon } from '@mui/icons-material';
 import { Menu, MenuItem } from '@mui/material';
 
+// Componente: Página de gestión de checklists de auditoría (US-005)
 const AuditChecklistPage: React.FC = () => {
     const { auditId } = useParams<{ auditId: string }>();
     const navigate = useNavigate();
@@ -64,7 +65,7 @@ const AuditChecklistPage: React.FC = () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Error generating report');
+                throw new Error(errorData.error || 'Error al generar el reporte');
             }
 
             // Descargar archivo
@@ -90,11 +91,11 @@ const AuditChecklistPage: React.FC = () => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
 
-            alert(`Report generated successfully: ${filename}`);
+            alert(`Reporte generado exitosamente: ${filename}`);
 
         } catch (err: any) {
             console.error('Error generating report:', err);
-            setError(err.message || 'Error generating report');
+            setError(err.message || 'Error al generar el reporte');
         } finally {
             setGeneratingReport(false);
         }
@@ -124,7 +125,7 @@ const AuditChecklistPage: React.FC = () => {
                 await loadChecklistDetail(toSelect);
             }
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error loading audit checklists');
+            setError(err.response?.data?.error || 'Error al cargar checklists de auditoría');
         } finally {
             setLoading(false);
         }
@@ -139,7 +140,7 @@ const AuditChecklistPage: React.FC = () => {
             setSelectedChecklist(checklist);
             setQuestionsWithResponses(detail.questions_with_responses);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error loading checklist detail');
+            setError(err.response?.data?.error || 'Error al cargar detalle del checklist');
         }
     };
 
@@ -150,14 +151,14 @@ const AuditChecklistPage: React.FC = () => {
             setTemplateSelectorOpen(false);
             await loadAuditAndChecklists();
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error starting checklist');
+            setError(err.response?.data?.error || 'Error al iniciar el checklist');
         }
     };
 
     const handleAnswerSubmitted = async () => {
         if (selectedChecklist) {
             await loadChecklistDetail(selectedChecklist);
-            await loadAuditAndChecklists(); // Refrescar lista
+            await loadAuditAndChecklists();
         }
     };
 
@@ -180,10 +181,10 @@ const AuditChecklistPage: React.FC = () => {
                         onClick={() => navigate('/audits')}
                         sx={{ mb: 1 }}
                     >
-                        Back to Audits
+                        Volver a Auditorías
                     </Button>
                     <Typography variant="h4">
-                        Audit Checklists
+                        Checklists de Auditoría
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                         {auditName}
@@ -191,30 +192,30 @@ const AuditChecklistPage: React.FC = () => {
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    {/* Botón de Generar Reporte */}
+                    {/* Botón de generar reporte (US-006) */}
                     <Button
                         variant="outlined"
                         startIcon={<ReportIcon />}
                         onClick={(e) => setReportMenuAnchor(e.currentTarget)}
                         disabled={checklists.length === 0 || generatingReport}
                     >
-                        {generatingReport ? 'Generating...' : 'Generate Report'}
+                        {generatingReport ? 'Generando...' : 'Generar Reporte'}
                     </Button>
 
-                    {/* Menú de formatos */}
+                    {/* Menú de formatos de reporte */}
                     <Menu
                         anchorEl={reportMenuAnchor}
                         open={Boolean(reportMenuAnchor)}
                         onClose={() => setReportMenuAnchor(null)}
                     >
                         <MenuItem onClick={() => handleGenerateReport('pdf')}>
-                            📄 PDF Report
+                            Reporte PDF
                         </MenuItem>
                         <MenuItem onClick={() => handleGenerateReport('xlsx')}>
-                            📊 Excel Report (XLSX)
+                            Reporte Excel (XLSX)
                         </MenuItem>
                         <MenuItem onClick={() => handleGenerateReport('csv')}>
-                            📋 CSV Export
+                            Exportar CSV
                         </MenuItem>
                     </Menu>
 
@@ -223,7 +224,7 @@ const AuditChecklistPage: React.FC = () => {
                         startIcon={<AddIcon />}
                         onClick={() => setTemplateSelectorOpen(true)}
                     >
-                        Start New Checklist
+                        Iniciar Nuevo Checklist
                     </Button>
                 </Box>
             </Box>
@@ -238,26 +239,26 @@ const AuditChecklistPage: React.FC = () => {
                 <Card>
                     <CardContent sx={{ textAlign: 'center', py: 6 }}>
                         <Typography variant="h6" gutterBottom>
-                            No checklists started yet
+                            No hay checklists iniciados
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                            Start your first security checklist for this audit
+                            Inicia tu primer checklist de seguridad para esta auditoría
                         </Typography>
                         <Button
                             variant="contained"
                             startIcon={<StartIcon />}
                             onClick={() => setTemplateSelectorOpen(true)}
                         >
-                            Start Checklist
+                            Iniciar Checklist
                         </Button>
                     </CardContent>
                 </Card>
             ) : (
                 <>
-                    {/* Selector de checklist */}
+                    {/* Selector de checklist activo */}
                     <Box sx={{ mb: 3 }}>
                         <Typography variant="h6" gutterBottom>
-                            Active Checklists
+                            Checklists Activos
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                             {checklists.map((checklist) => (
@@ -276,8 +277,8 @@ const AuditChecklistPage: React.FC = () => {
                     {selectedChecklist && (
                         <>
                             <Tabs value={currentTab} onChange={(_, v) => setCurrentTab(v)} sx={{ mb: 2 }}>
-                                <Tab label="Execute Checklist" value="execute" />
-                                <Tab label="View Summary" value="summary" />
+                                <Tab label="Ejecutar Checklist" value="execute" />
+                                <Tab label="Ver Resumen" value="summary" />
                             </Tabs>
 
                             {currentTab === 'execute' && (

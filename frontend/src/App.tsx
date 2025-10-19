@@ -100,7 +100,7 @@ const AuthenticatedApp: React.FC<{ user: User; onLogout: () => void }> = ({ user
 };
 
 
-// Componentes de contenido
+// Componente: Contenido del panel principal (US-011)
 const DashboardContent: React.FC = () => (
   <Paper sx={{ p: 3 }}>
     <Typography variant="h4" gutterBottom>Panel Principal</Typography>
@@ -108,20 +108,21 @@ const DashboardContent: React.FC = () => (
   </Paper>
 );
 
+// Componente: Gestión de activos digitales (US-001, US-002, US-003)
 const AssetsContent: React.FC = () => {
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingAsset, setEditingAsset] = useState<any>(null);
 
-  // Estados para filtros
+  // Estados para filtros de búsqueda (US-002)
   const [filters, setFilters] = useState({
     name: '',
     type: '',
     status: ''
   });
 
-  // Formulario state
+  // Estado del formulario de creación/edición
   const [formData, setFormData] = useState({
     name: '',
     type: 'Hardware',
@@ -256,7 +257,7 @@ const AssetsContent: React.FC = () => {
 
   return (
     <Paper sx={{ p: 3 }}>
-      {/* Header */}
+      {/* Encabezado */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Gestión de Activos</Typography>
         <Button
@@ -267,7 +268,7 @@ const AssetsContent: React.FC = () => {
         </Button>
       </Box>
 
-      {/* Filtros */}
+      {/* Sección de filtros y búsqueda (US-002) */}
       <Paper sx={{ p: 2, mb: 3, bgcolor: '#f8f9fa' }}>
         <Typography variant="h6" gutterBottom>
           🔍 Buscar y Filtrar Activos (US-002)
@@ -357,7 +358,7 @@ const AssetsContent: React.FC = () => {
         </Box>
       </Paper>
 
-      {/* Formulario */}
+      {/* Formulario de creación/edición de activos (US-001, US-003) */}
       {showForm && (
         <Paper sx={{ p: 2, mb: 3, bgcolor: '#f5f5f5' }}>
           <Typography variant="h6" gutterBottom>
@@ -418,7 +419,7 @@ const AssetsContent: React.FC = () => {
         </Paper>
       )}
 
-      {/* Lista de activos */}
+      {/* Lista de activos con paginación */}
       {loading ? (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <Typography>Cargando activos...</Typography>
@@ -486,6 +487,7 @@ const AssetsContent: React.FC = () => {
   );
 };
 
+// Componente: Gestión de auditorías (US-004)
 const AuditsContent: React.FC = () => {
   const navigate = useNavigate();
   const [audits, setAudits] = useState<any[]>([]);
@@ -501,7 +503,7 @@ const AuditsContent: React.FC = () => {
     status: 'Created'
   });
 
-  // Assets seleccionados para la auditoría
+  // Activos seleccionados para asignar a la auditoría
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
 
   useEffect(() => {
@@ -551,10 +553,10 @@ const AuditsContent: React.FC = () => {
     try {
       const payload = {
         ...formData,
-        asset_ids: selectedAssets // CRÍTICO: Enviar los IDs de activos seleccionados
+        asset_ids: selectedAssets // Enviar los IDs de activos seleccionados
       };
 
-      console.log('📤 Enviando payload:', payload); // Debug
+      console.log('Enviando payload:', payload);
 
       const url = editingAudit
         ? `http://127.0.0.1:5000/api/audits/${editingAudit.id}`
@@ -572,7 +574,7 @@ const AuditsContent: React.FC = () => {
       });
 
       const responseData = await response.json();
-      console.log('📥 Respuesta del servidor:', responseData); // Debug
+      console.log('Respuesta del servidor:', responseData);
 
       if (response.ok) {
         setShowForm(false);
@@ -600,7 +602,7 @@ const AuditsContent: React.FC = () => {
       status: audit.status
     });
 
-    // CRÍTICO: Cargar los activos asignados a esta auditoría
+    // Cargar los activos asignados a esta auditoría
     try {
       const response = await fetch(`http://127.0.0.1:5000/api/audits/${audit.id}/assets`, {
         headers: {
@@ -612,7 +614,7 @@ const AuditsContent: React.FC = () => {
       if (response.ok && data.assets) {
         const assignedAssetIds = data.assets.map((asset: any) => asset.id);
         setSelectedAssets(assignedAssetIds);
-        console.log('📋 Activos asignados cargados:', assignedAssetIds); // Debug
+        console.log('Activos asignados cargados:', assignedAssetIds);
       }
     } catch (error) {
       console.error('Error cargando activos de la auditoría:', error);
@@ -659,7 +661,7 @@ const AuditsContent: React.FC = () => {
         ? prev.filter(id => id !== assetId)
         : [...prev, assetId];
 
-      console.log('🔄 Activos seleccionados:', newSelection); // Debug
+      console.log('Activos seleccionados:', newSelection);
       return newSelection;
     });
   };
@@ -684,7 +686,7 @@ const AuditsContent: React.FC = () => {
 
   return (
     <Paper sx={{ p: 3 }}>
-      {/* Header */}
+      {/* Encabezado */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Gestión de Auditorías</Typography>
         <Button
@@ -695,7 +697,7 @@ const AuditsContent: React.FC = () => {
         </Button>
       </Box>
 
-      {/* Formulario de auditoría (US-004) */}
+      {/* Formulario de creación/edición de auditoría (US-004) */}
       {showForm && (
         <Paper sx={{ p: 3, mb: 3, bgcolor: '#f0f8ff', border: '2px solid #1976d2' }}>
           <Typography variant="h6" gutterBottom>
@@ -703,7 +705,7 @@ const AuditsContent: React.FC = () => {
           </Typography>
 
           <form onSubmit={handleSubmit}>
-            {/* Nombre y descripción */}
+            {/* Nombre y descripción de la auditoría */}
             <Box sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 2, mb: 2 }}>
               <TextField
                 label="Nombre de la Auditoría *"
@@ -737,7 +739,7 @@ const AuditsContent: React.FC = () => {
               sx={{ mb: 3 }}
             />
 
-            {/* Asignar activos a auditoría */}
+            {/* Asignar activos a la auditoría */}
             <Typography variant="h6" gutterBottom>
               📦 Asignar Activos a la Auditoría
             </Typography>
@@ -767,7 +769,7 @@ const AuditsContent: React.FC = () => {
               </Paper>
             )}
 
-            {/* Botones */}
+            {/* Botones de acción */}
             <Box>
               <Button
                 type="submit"
@@ -792,7 +794,7 @@ const AuditsContent: React.FC = () => {
         </Paper>
       )}
 
-      {/* Lista de Auditorías */}
+      {/* Lista de auditorías */}
       <Paper sx={{ p: 2 }}>
         <Typography variant="h6" gutterBottom>
           📋 Lista de Auditorías ({audits.length} auditorías)
@@ -887,7 +889,7 @@ const AuditsContent: React.FC = () => {
   );
 };
 
-// Componente de login
+// Componente: Formulario de inicio de sesión (US-009)
 const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => {
   const [email, setEmail] = useState('admin@cyberlynx.com');
   const [password, setPassword] = useState('admin123');
