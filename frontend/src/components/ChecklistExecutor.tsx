@@ -25,6 +25,7 @@ interface ChecklistExecutorProps {
     onAnswerSubmitted: () => void;
 }
 
+// Lógica de color (sin cambios)
 const getSeverityColor = (severity: string) => {
     switch (severity) {
         case 'Critical': return 'error';
@@ -35,6 +36,7 @@ const getSeverityColor = (severity: string) => {
     }
 };
 
+// Lógica de íconos (sin cambios)
 const getAnswerIcon = (answer: string | undefined) => {
     switch (answer) {
         case 'Yes': return <CheckCircle color="success" />;
@@ -44,7 +46,17 @@ const getAnswerIcon = (answer: string | undefined) => {
     }
 };
 
-// Componente: Ejecutor de checklist pregunta por pregunta (US-005)
+// ✅ NUEVA FUNCIÓN DE TRADUCCIÓN
+const translateSeverity = (severity: string): string => {
+    const translations: { [key: string]: string } = {
+        'Critical': 'Crítico',
+        'High': 'Alto',
+        'Medium': 'Medio',
+        'Low': 'Bajo'
+    };
+    return translations[severity] || severity;
+};
+
 const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
     auditId,
     checklistId,
@@ -61,22 +73,9 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
     const currentItem = questionsWithResponses[currentQuestionIndex];
     const isLastQuestion = currentQuestionIndex === questionsWithResponses.length - 1;
 
-    // Restaurar índice guardado al montar el componente
-    React.useEffect(() => {
-        const storageKey = `checklist_${checklistId}_index`;
-        const savedIndex = localStorage.getItem(storageKey);
-
-        if (savedIndex) {
-            const index = parseInt(savedIndex, 10);
-            if (index >= 0 && index < questionsWithResponses.length) {
-                setCurrentQuestionIndex(index);
-            }
-        }
-    }, [checklistId, questionsWithResponses.length]);
-
     // Pre-cargar respuesta si existe
     React.useEffect(() => {
-        if (currentItem.response) {
+        if (currentItem?.response) {
             setAnswer(currentItem.response.answer);
             setNotes(currentItem.response.notes || '');
         } else {
@@ -85,7 +84,6 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
         }
     }, [currentQuestionIndex, currentItem]);
 
-    // Guardar respuesta y manejar navegación
     const handleSubmitAnswer = async () => {
         try {
             setSubmitting(true);
@@ -97,32 +95,15 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
                 notes: notes
             };
 
-            // Guardar respuesta en backend
             await checklistService.answerQuestion(auditId, checklistId, data);
 
-            // Avanzar índice antes de recargar datos
             if (!isLastQuestion) {
-                const nextIndex = currentQuestionIndex + 1;
-                setCurrentQuestionIndex(nextIndex);
-
-                // Guardar progreso en localStorage
-                const storageKey = `checklist_${checklistId}_index`;
-                localStorage.setItem(storageKey, nextIndex.toString());
+                setCurrentQuestionIndex(currentQuestionIndex + 1);
             } else {
-                // Si es la última pregunta, limpiar localStorage
-                const storageKey = `checklist_${checklistId}_index`;
-                localStorage.removeItem(storageKey);
-            }
-
-            // Refrescar datos solo al completar checklist
-            if (isLastQuestion) {
                 onAnswerSubmitted();
             }
-            // Si no es la última pregunta, NO llamamos onAnswerSubmitted()
-            // para evitar recargas innecesarias y el bug de navegación
-
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error al guardar respuesta');
+            setError(err.response?.data?.error || 'Error submitting answer');
         } finally {
             setSubmitting(false);
         }
@@ -130,32 +111,14 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
 
     const handlePrevious = () => {
         if (currentQuestionIndex > 0) {
-            const newIndex = currentQuestionIndex - 1;
-            setCurrentQuestionIndex(newIndex);
-
-            // Actualizar localStorage al navegar manualmente
-            const storageKey = `checklist_${checklistId}_index`;
-            localStorage.setItem(storageKey, newIndex.toString());
+            setCurrentQuestionIndex(currentQuestionIndex - 1);
         }
     };
 
     const handleNext = () => {
         if (currentQuestionIndex < questionsWithResponses.length - 1) {
-            const newIndex = currentQuestionIndex + 1;
-            setCurrentQuestionIndex(newIndex);
-
-            // Actualizar localStorage al navegar manualmente
-            const storageKey = `checklist_${checklistId}_index`;
-            localStorage.setItem(storageKey, newIndex.toString());
+            setCurrentQuestionIndex(currentQuestionIndex + 1);
         }
-    };
-
-    // Navegación directa desde mini-mapa
-    const goToQuestion = (index: number) => {
-        setCurrentQuestionIndex(index);
-
-        const storageKey = `checklist_${checklistId}_index`;
-        localStorage.setItem(storageKey, index.toString());
     };
 
     return (
@@ -173,7 +136,7 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
             </Box>
 
             {error && (
-                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+                <Alert severity="error" sx={{ mb: 2 }}>
                     {error}
                 </Alert>
             )}
@@ -185,18 +148,12 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
                             {currentItem.question.question_text}
                         </Typography>
                         <Chip
-                            label={currentItem.question.severity}
+
+                            label={translateSeverity(currentItem.question.severity)}
                             size="small"
                             color={getSeverityColor(currentItem.question.severity) as any}
                         />
                     </Box>
-
-                    {/* Indicador de respuesta existente */}
-                    {currentItem.response && (
-                        <Alert severity="info" sx={{ mb: 2 }}>
-                            Esta pregunta fue respondida anteriormente. Puedes modificar tu respuesta abajo.
-                        </Alert>
-                    )}
 
                     <RadioGroup value={answer} onChange={(e) => setAnswer(e.target.value as any)}>
                         <FormControlLabel
@@ -205,7 +162,7 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
                             label={
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <CheckCircle color="success" fontSize="small" />
-                                    <span>Sí - Cumple</span>
+                                    <span>Sí - Conforme</span>
                                 </Box>
                             }
                         />
@@ -215,7 +172,7 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
                             label={
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <Error color="error" fontSize="small" />
-                                    <span>No - No cumple</span>
+                                    <span>No - No Conforme</span>
                                 </Box>
                             }
                         />
@@ -225,7 +182,7 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
                             label={
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <HelpOutline color="disabled" fontSize="small" />
-                                    <span>N/A - No aplica</span>
+                                    <span>N/A - No Aplica</span>
                                 </Box>
                             }
                         />
@@ -239,13 +196,13 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         sx={{ mt: 2 }}
-                        placeholder="Agrega notas u observaciones relevantes..."
+                        placeholder="Añada notas u observaciones relevantes..."
                     />
 
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
                         <Button
                             onClick={handlePrevious}
-                            disabled={currentQuestionIndex === 0 || submitting}
+                            disabled={currentQuestionIndex === 0}
                         >
                             Anterior
                         </Button>
@@ -255,9 +212,8 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
                                 <Button
                                     onClick={handleNext}
                                     variant="outlined"
-                                    disabled={submitting}
                                 >
-                                    Omitir
+                                    Saltar
                                 </Button>
                             )}
                             <Button
@@ -265,7 +221,7 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
                                 variant="contained"
                                 disabled={submitting}
                             >
-                                {submitting ? 'Guardando...' : (isLastQuestion ? 'Guardar y Finalizar' : 'Guardar y Siguiente')}
+                                {submitting ? 'Guardando...' : (isLastQuestion ? 'Finalizar' : 'Guardar y Siguiente')}
                             </Button>
                         </Box>
                     </Box>
@@ -277,7 +233,7 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
                 {questionsWithResponses.map((item, index) => (
                     <Box
                         key={item.question.id}
-                        onClick={() => goToQuestion(index)}
+                        onClick={() => setCurrentQuestionIndex(index)}
                         sx={{
                             width: 32,
                             height: 32,
@@ -289,8 +245,7 @@ const ChecklistExecutor: React.FC<ChecklistExecutorProps> = ({
                             borderRadius: 1,
                             cursor: 'pointer',
                             bgcolor: item.response ? 'success.light' : 'transparent',
-                            '&:hover': { bgcolor: 'action.hover' },
-                            transition: 'all 0.2s'
+                            '&:hover': { bgcolor: 'action.hover' }
                         }}
                     >
                         {item.response ? getAnswerIcon(item.response.answer) : (

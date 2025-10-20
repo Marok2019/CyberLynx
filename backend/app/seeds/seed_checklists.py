@@ -2,107 +2,103 @@ from app import db
 from app.models.checklist import ChecklistTemplate, ChecklistQuestion
 
 def seed_checklist_templates():
-    """Crear 5 módulos básicos de verificación predefinidos"""
+    """Crear 5 módulos básicos de verificación predefinidos en español"""
     
     templates_data = [
         {
-            'name': 'Network Security Baseline',
-            'category': 'Network_Security',
-            'description': 'Basic network security controls and configurations',
+            'name': 'Seguridad de Red', # ✅ Tu traducción para el usuario
+            'category': 'Network_Security', # ✅ Mi clave interna en inglés
+            'description': 'Controles y configuraciones básicas de seguridad de red.',
             'questions': [
-                {'text': 'Are firewalls properly configured and up to date?', 'order': 1, 'severity': 'Critical'},
-                {'text': 'Is network segmentation implemented?', 'order': 2, 'severity': 'High'},
-                {'text': 'Are VPNs used for remote access?', 'order': 3, 'severity': 'High'},
-                {'text': 'Is wireless network encryption enabled (WPA3/WPA2)?', 'order': 4, 'severity': 'High'},
-                {'text': 'Are unused network ports disabled?', 'order': 5, 'severity': 'Medium'},
-                {'text': 'Is network traffic monitored and logged?', 'order': 6, 'severity': 'Medium'},
-                {'text': 'Are intrusion detection/prevention systems (IDS/IPS) deployed?', 'order': 7, 'severity': 'High'},
-                {'text': 'Is DNS filtering implemented?', 'order': 8, 'severity': 'Medium'},
+                {'text': '¿Están los firewalls configurados correctamente y actualizados?', 'order': 1, 'severity': 'Critical'}, # ✅ Clave de severidad en inglés
+                {'text': '¿Se implementa la segmentación de red?', 'order': 2, 'severity': 'High'},
+                {'text': '¿Se utilizan VPN para el acceso remoto?', 'order': 3, 'severity': 'High'},
+                {'text': '¿Está habilitada la encriptación de la red inalámbrica (WPA3/WPA2)?', 'order': 4, 'severity': 'High'},
+                {'text': '¿Están deshabilitados los puertos de red no utilizados?', 'order': 5, 'severity': 'Medium'},
+                {'text': '¿Se monitorea y registra el tráfico de red?', 'order': 6, 'severity': 'Medium'},
+                {'text': '¿Se han implementado sistemas de detección/preventiva de intrusiones (IDS/IPS)?', 'order': 7, 'severity': 'High'},
+                {'text': '¿Se ha implementado el filtrado de DNS?', 'order': 8, 'severity': 'Medium'},
             ]
         },
         {
-            'name': 'Access Control & Authentication',
+            'name': 'Control de Acceso y Autenticación',
             'category': 'Access_Control',
-            'description': 'User access management and authentication mechanisms',
+            'description': 'Gestión de acceso de usuarios y mecanismos de autenticación.',
             'questions': [
-                {'text': 'Is multi-factor authentication (MFA) enforced for all users?', 'order': 1, 'severity': 'Critical'},
-                {'text': 'Are password policies enforced (complexity, length, expiration)?', 'order': 2, 'severity': 'High'},
-                {'text': 'Is the principle of least privilege applied to user accounts?', 'order': 3, 'severity': 'Critical'},
-                {'text': 'Are privileged accounts properly managed and monitored?', 'order': 4, 'severity': 'Critical'},
-                {'text': 'Is there a formal user access review process?', 'order': 5, 'severity': 'High'},
-                {'text': 'Are default passwords changed on all systems?', 'order': 6, 'severity': 'Critical'},
-                {'text': 'Is account lockout enabled after failed login attempts?', 'order': 7, 'severity': 'Medium'},
-                {'text': 'Are user access logs regularly reviewed?', 'order': 8, 'severity': 'Medium'},
+                {'text': '¿Se aplica la autenticación de múltiples factores (MFA) para todos los usuarios?', 'order': 1, 'severity': 'Critical'},
+                {'text': '¿Se aplican políticas de contraseñas (complejidad, longitud, expiración)?', 'order': 2, 'severity': 'High'},
+                {'text': '¿Se aplica el principio de menor privilegio a las cuentas de usuario?', 'order': 3, 'severity': 'Critical'},
+                {'text': '¿Se gestionan y supervisan adecuadamente las cuentas privilegiadas?', 'order': 4, 'severity': 'Critical'},
+                {'text': '¿Existe un proceso formal de revisión de acceso de usuarios?', 'order': 5, 'severity': 'High'},
+                {'text': '¿Se cambian las contraseñas predeterminadas en todos los sistemas?', 'order': 6, 'severity': 'Critical'},
+                {'text': '¿Está habilitada la suspensión de cuentas después de intentos fallidos de inicio de sesión?', 'order': 7, 'severity': 'Medium'},
+                {'text': '¿Se revisan regularmente los registros de acceso de usuarios?', 'order': 8, 'severity': 'Medium'},
             ]
         },
         {
-            'name': 'Data Protection & Encryption',
+            'name': 'Protección de Datos y Cifrado',
             'category': 'Data_Protection',
-            'description': 'Data security controls and encryption standards',
+            'description': 'Controles de seguridad de datos y estándares de cifrado.',
             'questions': [
-                {'text': 'Is data at rest encrypted using industry standards (AES-256)?', 'order': 1, 'severity': 'Critical'},
-                {'text': 'Is data in transit encrypted (TLS 1.2+)?', 'order': 2, 'severity': 'Critical'},
-                {'text': 'Are backups encrypted and tested regularly?', 'order': 3, 'severity': 'High'},
-                {'text': 'Is sensitive data classified and labeled?', 'order': 4, 'severity': 'High'},
-                {'text': 'Are data retention policies defined and enforced?', 'order': 5, 'severity': 'Medium'},
-                {'text': 'Is there a secure data disposal process?', 'order': 6, 'severity': 'High'},
-                {'text': 'Are encryption keys properly managed and rotated?', 'order': 7, 'severity': 'Critical'},
-                {'text': 'Is data loss prevention (DLP) implemented?', 'order': 8, 'severity': 'Medium'},
+                {'text': '¿Está cifrada la información en reposo utilizando estándares de la industria (AES-256)?', 'order': 1, 'severity': 'Critical'},
+                {'text': '¿Está cifrada la información en tránsito (TLS 1.2+)?', 'order': 2, 'severity': 'Critical'},
+                {'text': '¿Se cifran y prueban regularmente las copias de seguridad?', 'order': 3, 'severity': 'High'},
+                {'text': '¿Se clasifica y etiqueta la información sensible?', 'order': 4, 'severity': 'High'},
+                {'text': '¿Se definen y aplican políticas de retención de datos?', 'order': 5, 'severity': 'Medium'},
+                {'text': '¿Existe un proceso seguro de eliminación de datos?', 'order': 6, 'severity': 'High'},
+                {'text': '¿Se gestionan y rotan adecuadamente las claves de cifrado?', 'order': 7, 'severity': 'Critical'},
+                {'text': '¿Se implementa la prevención de pérdida de datos (DLP)?', 'order': 8, 'severity': 'Medium'},
             ]
         },
         {
-            'name': 'Physical Security Controls',
+            'name': 'Controles de Seguridad Física',
             'category': 'Physical_Security',
-            'description': 'Physical access and environmental controls',
+            'description': 'Controles de acceso físico y ambiental.',
             'questions': [
-                {'text': 'Are server rooms and data centers physically secured?', 'order': 1, 'severity': 'High'},
-                {'text': 'Is physical access to critical areas logged and monitored?', 'order': 2, 'severity': 'High'},
-                {'text': 'Are surveillance cameras installed in critical areas?', 'order': 3, 'severity': 'Medium'},
-                {'text': 'Is there environmental monitoring (temperature, humidity)?', 'order': 4, 'severity': 'Medium'},
-                {'text': 'Are fire suppression systems installed and tested?', 'order': 5, 'severity': 'High'},
-                {'text': 'Is there a visitor management system in place?', 'order': 6, 'severity': 'Low'},
-                {'text': 'Are workstations secured with cable locks where appropriate?', 'order': 7, 'severity': 'Low'},
-                {'text': 'Is equipment disposal handled securely?', 'order': 8, 'severity': 'Medium'},
+                {'text': '¿Están aseguradas físicamente las salas de servidores y los centros de datos?', 'order': 1, 'severity': 'High'},
+                {'text': '¿Se registra y supervisa el acceso físico a áreas críticas?', 'order': 2, 'severity': 'High'},
+                {'text': '¿Se instalan cámaras de vigilancia en áreas críticas?', 'order': 3, 'severity': 'Medium'},
+                {'text': '¿Hay monitoreo ambiental (temperatura, humedad)?', 'order': 4, 'severity': 'Medium'},
+                {'text': '¿Se instalan y prueban sistemas de supresión de incendios?', 'order': 5, 'severity': 'High'},
+                {'text': '¿Hay un sistema de gestión de visitantes en su lugar?', 'order': 6, 'severity': 'Low'},
+                {'text': '¿Se aseguran las estaciones de trabajo con candados de cable donde sea apropiado?', 'order': 7, 'severity': 'Low'},
+                {'text': '¿Se maneja la eliminación de equipos de manera segura?', 'order': 8, 'severity': 'Medium'},
             ]
         },
         {
-            'name': 'Incident Response & Recovery',
+            'name': 'Respuesta a Incidentes y Recuperación',
             'category': 'Incident_Response',
-            'description': 'Incident handling and business continuity procedures',
+            'description': 'Manejo de incidentes y procedimientos de continuidad del negocio.',
             'questions': [
-                {'text': 'Is there a documented incident response plan?', 'order': 1, 'severity': 'Critical'},
-                {'text': 'Is the incident response team identified and trained?', 'order': 2, 'severity': 'High'},
-                {'text': 'Are security incidents logged and tracked?', 'order': 3, 'severity': 'High'},
-                {'text': 'Is there a communication plan for security incidents?', 'order': 4, 'severity': 'High'},
-                {'text': 'Are incident response drills conducted regularly?', 'order': 5, 'severity': 'Medium'},
-                {'text': 'Is there a business continuity plan (BCP)?', 'order': 6, 'severity': 'Critical'},
-                {'text': 'Are disaster recovery procedures tested annually?', 'order': 7, 'severity': 'High'},
-                {'text': 'Is there a post-incident review process?', 'order': 8, 'severity': 'Medium'},
+                {'text': '¿Existe un plan de respuesta a incidentes documentado?', 'order': 1, 'severity': 'Critical'},
+                {'text': '¿Está identificado y capacitado el equipo de respuesta a incidentes?', 'order': 2, 'severity': 'High'},
+                {'text': '¿Se registran y rastrean los incidentes de seguridad?', 'order': 3, 'severity': 'High'},
+                {'text': '¿Existe un plan de comunicación para incidentes de seguridad?', 'order': 4, 'severity': 'High'},
+                {'text': '¿Se realizan simulacros de respuesta a incidentes regularmente?', 'order': 5, 'severity': 'Medium'},
+                {'text': '¿Hay un plan de continuidad del negocio (BCP)?', 'order': 6, 'severity': 'Critical'},
+                {'text': '¿Se prueban anualmente los procedimientos de recuperación ante desastres?', 'order': 7, 'severity': 'High'},
+                {'text': '¿Hay un proceso de revisión posterior a incidentes?', 'order': 8, 'severity': 'Medium'},
             ]
         }
     ]
     
-    print('🌱 Seeding checklist templates...')
+    print('🌱 Sembrando plantillas de checklist...')
     
     for template_data in templates_data:
-        # Verificar si ya existe
         existing = ChecklistTemplate.query.filter_by(name=template_data['name']).first()
         
         if existing:
-            print(f'⚠️  Template "{template_data["name"]}" already exists, skipping...')
+            print(f'⚠️  La plantilla "{template_data["name"]}" ya existe, omitiendo...')
             continue
         
-        # Crear template
         template = ChecklistTemplate(
             name=template_data['name'],
             category=template_data['category'],
             description=template_data['description']
         )
-        
         db.session.add(template)
-        db.session.flush()  # Para obtener el ID del template
+        db.session.flush()
         
-        # Crear preguntas
         for question_data in template_data['questions']:
             question = ChecklistQuestion(
                 template_id=template.id,
@@ -113,16 +109,6 @@ def seed_checklist_templates():
             db.session.add(question)
         
         db.session.commit()
-        print(f'✅ Created template: {template_data["name"]} with {len(template_data["questions"])} questions')
+        print(f'✅ Creada plantilla: {template_data["name"]} con {len(template_data["questions"])} preguntas')
     
-    print('🎉 Checklist templates seeded successfully!')
-
-
-if __name__ == '__main__':
-    from app import create_app, db
-    import os
-    
-    app = create_app(os.getenv('FLASK_CONFIG') or 'development')
-    
-    with app.app_context():
-        seed_checklist_templates()
+    print('🎉 Plantillas de checklist sembradas exitosamente!')

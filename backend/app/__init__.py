@@ -25,11 +25,13 @@ def create_app(config_name='default'):
     from app.routes.r_audits import audits_bp
     from app.routes.r_checklists import checklists_bp
     from app.routes.r_reports import reports_bp
+    from app.routes.r_users import users_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(assets_bp, url_prefix='/api/assets')
     app.register_blueprint(audits_bp, url_prefix='/api/audits')
     app.register_blueprint(checklists_bp, url_prefix='/api/checklists')
     app.register_blueprint(reports_bp, url_prefix='/api/reports')
+    app.register_blueprint(users_bp, url_prefix='/api/users')
     
     return app
