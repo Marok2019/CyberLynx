@@ -1,7 +1,8 @@
 export const usersService = {
-    async list(active?: boolean) {
+    async list(active?: boolean, role?: string) {
         const params = new URLSearchParams();
         if (active !== undefined) params.append('active', String(active));
+        if (role && role !== 'todos') params.append('role', role);
         const res = await fetch(`http://127.0.0.1:5000/api/users/?${params.toString()}`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });

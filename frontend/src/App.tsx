@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import { User } from './types/User';
 import AuditChecklistPage from './pages/AuditChecklistPage';
+import UsersPage from './pages/UsersPage';
 
 const theme = createTheme({
   palette: {
@@ -57,11 +58,14 @@ const AuthenticatedApp: React.FC<{ user: User; onLogout: () => void }> = ({ user
     if (location.pathname.startsWith('/audits/') && location.pathname.includes('/checklists')) return 2;
     if (location.pathname === '/audits') return 2;
     if (location.pathname === '/assets') return 1;
+    if (location.pathname === '/users') return user.role === 'admin' ? 3 : false;
     return 0;
   };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    const paths = ['/', '/assets', '/audits'];
+    const paths = user.role === 'admin'
+      ? ['/', '/assets', '/audits', '/users']
+      : ['/', '/assets', '/audits'];
     navigate(paths[newValue]);
   };
 
@@ -83,6 +87,7 @@ const AuthenticatedApp: React.FC<{ user: User; onLogout: () => void }> = ({ user
           <Tab label="Panel Principal" />
           <Tab label="Activos" />
           <Tab label="Auditorías" />
+          {user.role === 'admin' && <Tab label="Usuarios" />}
         </Tabs>
       </Box>
 
@@ -92,6 +97,7 @@ const AuthenticatedApp: React.FC<{ user: User; onLogout: () => void }> = ({ user
           <Route path="/assets" element={<AssetsContent />} />
           <Route path="/audits" element={<AuditsContent />} />
           <Route path="/audits/:auditId/checklists" element={<AuditChecklistPage />} />
+          {user.role === 'admin' && <Route path="/users" element={<UsersPage />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Box>

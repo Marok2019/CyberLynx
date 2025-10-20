@@ -13,22 +13,6 @@ def is_valid_email(email: str) -> bool:
 def is_valid_password(pw: str) -> bool:
     return re.fullmatch(r'^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$', pw) is not None
 
-@users_bp.route('/', methods=['GET'])
-@jwt_required()
-@admin_required()
-def list_users():
-    active = request.args.get('active')
-    query = User.query
-    if active is not None:
-        if active.lower() == 'true':
-            query = query.filter_by(active=True)
-        elif active.lower() == 'false':
-            query = query.filter_by(active=False)
-    users = query.order_by(User.created_at.desc()).all()
-    return jsonify({
-        'total': len(users),
-        'users': [user.to_dict() for user in users]
-    }), 200
 
 @users_bp.route('/<int:user_id>', methods=['GET'])
 @jwt_required()
@@ -91,3 +75,23 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
     return jsonify({'message': 'User deleted successfully', 'user_id': user_id}), 200
+
+@users_bp.route('/', methods=['GET'])
+@jwt_required()
+@admin_required()
+def list_users():
+    active = request.args.get('active')
+    role = request.args.get('role')
+    query = User.query
+    if active is not None:
+        if active.lower() == 'true':
+            query = query.filter_by(active=True)
+        elif active.lower() == 'false':
+            query = query.filter_by(active=False)
+    if role and role.lower() != "todos":
+        query = query.filter_by(role=role)
+    users = query.order_by(User.created_at.desc()).all()
+    return jsonify({
+        'total': len(users),
+        'users': [user.to_dict() for user in users]
+    }), 200
