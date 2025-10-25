@@ -8,7 +8,7 @@ audits_bp = Blueprint('audits', __name__)
 @audits_bp.route('', methods=['GET'])
 @jwt_required()
 def list_audits():
-    """US-004: List audits"""
+    """US-004: Listar auditorías"""
     from app.models.audit import Audit
     
     try:
@@ -33,7 +33,7 @@ def list_audits():
 @audits_bp.route('/<int:audit_id>', methods=['PUT'])
 @jwt_required()
 def update_audit(audit_id):
-    """US-004: Update audit with assets assignment"""
+    """US-004: Actualizar auditoría con asignación de activos"""
     from app.models.audit import Audit
     from app.models.asset import Asset
     
@@ -104,7 +104,7 @@ def update_audit(audit_id):
 @audits_bp.route('', methods=['POST'])
 @jwt_required()
 def create_audit():
-    """US-004: Create basic audit with asset assignment"""
+    """US-004: Crear auditoría básica con asignación de activos"""
     from app.models.audit import Audit
     from app.models.asset import Asset
     
@@ -162,7 +162,7 @@ def create_audit():
 @audits_bp.route('/<int:audit_id>/assets', methods=['GET'])
 @jwt_required()
 def get_audit_assets(audit_id):
-    """US-004: Get assets assigned to audit"""
+    """US-004: Obtener activos asignados a auditoría"""
     from app.models.audit import Audit
     
     try:
@@ -180,7 +180,7 @@ def get_audit_assets(audit_id):
 @audits_bp.route('/<int:audit_id>', methods=['DELETE'])
 @jwt_required()
 def delete_audit(audit_id):
-    """Delete audit - SOLUCIÓN PROBLEMA 1"""
+    """Eliminar auditoría - SOLUCIÓN PROBLEMA 1"""
     from app.models.audit import Audit
     
     try:

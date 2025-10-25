@@ -7,7 +7,7 @@ assets_bp = Blueprint('assets', __name__)
 @assets_bp.route('', methods=['POST'])
 @jwt_required()
 def create_asset():
-    """US-001: Create digital asset"""
+    """US-001: Crear activo digital"""
     from app.models.asset import Asset
     
     try:
@@ -49,7 +49,7 @@ def create_asset():
 @assets_bp.route('', methods=['GET'])
 @jwt_required()
 def list_assets():
-    """US-002: Search and filter assets"""
+    """US-002: Buscar y filtrar activos"""
     from app.models.asset import Asset
     
     try:
@@ -90,7 +90,7 @@ def list_assets():
 @assets_bp.route('/<int:asset_id>', methods=['PUT'])
 @jwt_required()
 def update_asset(asset_id):
-    """US-003: Update asset information"""
+    """US-003: Actualizar información de activo"""
     from app.models.asset import Asset
     
     try:
@@ -126,7 +126,7 @@ def update_asset(asset_id):
 @assets_bp.route('/<int:asset_id>', methods=['DELETE'])
 @jwt_required()
 def delete_asset(asset_id):
-    """US-003: Delete obsolete asset"""
+    """US-003: Eliminar activo obsoleto"""
     from app.models.asset import Asset
     
     try:

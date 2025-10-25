@@ -6,7 +6,7 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """Authentication endpoint"""
+    """Endpoint de autenticación"""
     from app.models.user import User
     
     try:
@@ -39,7 +39,7 @@ def login():
 @auth_bp.route('/profile', methods=['GET'])
 @jwt_required()
 def get_profile():
-    """Get authenticated user profile"""
+    """Obtener perfil del usuario autenticado"""
     from app.models.user import User
     
     try:

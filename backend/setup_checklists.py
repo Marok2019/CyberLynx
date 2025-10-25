@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to setup checklist tables and seed predefined templates for US-005
+Script para configurar tablas de checklist y sembrar plantillas predefinidas para US-005
 """
 import os
 import sys
@@ -14,11 +14,11 @@ def main():
     with app.app_context():
         print('🔍 Checking database tables...')
 
-        # Create all tables if they don't exist
+        # Crear todas las tablas si no existen
         db.create_all()
         print('✅ Database tables created/verified')
 
-        # Check if templates already exist
+        # Verificar si las plantillas ya existen
         template_count = ChecklistTemplate.query.count()
         print(f'📊 Current checklist templates: {template_count}')
 
@@ -29,7 +29,7 @@ def main():
             print('ℹ️  Templates already exist. Skipping seed.')
             print('   To re-seed, delete templates from database first.')
 
-        # Show summary
+        # Mostrar resumen
         print('\n📋 Summary:')
         templates = ChecklistTemplate.query.all()
         for template in templates:
