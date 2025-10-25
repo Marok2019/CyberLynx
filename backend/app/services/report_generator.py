@@ -226,4 +226,153 @@ class ReportGenerator:
         ws_summary['B5'] = audit.created_at.strftime('%d/%m/%Y %H:%M')
         ws_summary['A6'] = "Fecha de finalización:"
         ws_summary['B6'] = audit.completed_at.strftime('%d/%m/%Y %H:%M') if audit.completed_at else 'En progreso'
+
+        if audit.description:
+            ws_summary['A7'] = "Descripción:"
+            ws_summary['B7'] = audit.description
+
+        header_fill = PatternFill(start_color="1976D2", end_color="1976D2", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True)
+
+        total_questions = 0
+        total_yes = 0
+        total_no = 0
+        total_na = 0
+
+        for checklist in checklist_data:
+            summary = checklist['summary']
+            total_questions += summary['total_questions']
+            total_yes += summary['yes_count']
+            total_no += summary['no_count']
+            total_na += summary['na_count']
+
+        compliance_rate = round((total_yes / (total_yes + total_no) * 100), 2) if (total_yes + total_no) > 0 else 0
+
+        ws_summary['A9'] = "RESUMEN EJECUTIVO"
+        ws_summary['A9'].font = Font(bold=True, size=14)
+        ws_summary['A10'] = "Preguntas evaluadas:"
+        ws_summary['B10'] = total_questions
+        ws_summary['A11'] = "Cumple (Sí):"
+        ws_summary['B11'] = total_yes
+        ws_summary['A12'] = "No cumple (No):"
+        ws_summary['B12'] = total_no
+        ws_summary['A13'] = "No aplica (N/A):"
+        ws_summary['B13'] = total_na
+        ws_summary['A14'] = "Porcentaje de cumplimiento:"
+        ws_summary['B14'] = f"{compliance_rate}%"
+
+        for checklist in checklist_data:
+            ws = wb.create_sheet(title=checklist['name'][:31])
+
+            ws['A1'] = checklist['name']
+            ws['A1'].font = Font(size=14, bold=True, color="1976D2")
+            ws.merge_cells('A1:F1')
+
+            ws['A2'] = f"Categoría: {checklist['category']}"
+
+            ws['A4'] = "Severidad"
+            ws['B4'] = "Total"
+            ws['C4'] = "Sí"
+            ws['D4'] = "No"
+            ws['E4'] = "N/A"
+            ws['F4'] = "Sin responder"
+
+            for col in ['A', 'B', 'C', 'D', 'E', 'F']:
+                ws[f'{col}4'].fill = header_fill
+                ws[f'{col}4'].font = header_font
+                ws[f'{col}4'].alignment = Alignment(horizontal='center')
+
+            row = 5
+            sev_map = {'Critical': 'Crítica', 'High': 'Alta', 'Medium': 'Media', 'Low': 'Baja'}
+            summary = checklist['summary']
+
+            for sev in ['Critical', 'High', 'Medium', 'Low']:
+                if sev in summary['severity_breakdown']:
+                    stats = summary['severity_breakdown'][sev]
+                    ws[f'A{row}'] = sev_map.get(sev, sev)
+                    ws[f'B{row}'] = stats['total']
+                    ws[f'C{row}'] = stats['yes']
+                    ws[f'D{row}'] = stats['no']
+                    ws[f'E{row}'] = stats['na']
+                    ws[f'F{row}'] = stats['unanswered']
+
+                    for col in ['A', 'B', 'C', 'D', 'E', 'F']:
+                        ws[f'{col}{row}'].alignment = Alignment(horizontal='center')
+
+                    row += 1
+
+        wb.save(buffer)
+        buffer.seek(0)
+        return buffer
+
+    @staticmethod
+    def generate_csv_report(audit, checklist_data):
+        buffer = StringIO()
+        writer = csv.writer(buffer)
+
+        writer.writerow(['Reporte de Auditoría de Seguridad - CyberLynx'])
+        writer.writerow([])
+
+        writer.writerow(['Nombre de la auditoría:', audit.name])
+        writer.writerow(['Estado:', audit.status])
+        writer.writerow(['Fecha de inicio:', audit.created_at.strftime('%d/%m/%Y %H:%M')])
+        writer.writerow(['Fecha de finalización:', audit.completed_at.strftime('%d/%m/%Y %H:%M') if audit.completed_at else 'En progreso'])
+
+        if audit.description:
+            writer.writerow(['Descripción:', audit.description])
+
+        writer.writerow([])
+
+        total_questions = 0
+        total_yes = 0
+        total_no = 0
+        total_na = 0
+
+        for checklist in checklist_data:
+            summary = checklist['summary']
+            total_questions += summary['total_questions']
+            total_yes += summary['yes_count']
+            total_no += summary['no_count']
+            total_na += summary['na_count']
+
+        compliance_rate = round((total_yes / (total_yes + total_no) * 100), 2) if (total_yes + total_no) > 0 else 0
+
+        writer.writerow(['RESUMEN EJECUTIVO'])
+        writer.writerow(['Preguntas evaluadas:', total_questions])
+        writer.writerow(['Cumple (Sí):', total_yes])
+        writer.writerow(['No cumple (No):', total_no])
+        writer.writerow(['No aplica (N/A):', total_na])
+        writer.writerow(['Porcentaje de cumplimiento:', f"{compliance_rate}%"])
+        writer.writerow([])
+
+        writer.writerow(['DETALLE POR CHECKLIST'])
+        writer.writerow([])
+
+        sev_map = {'Critical': 'Crítica', 'High': 'Alta', 'Medium': 'Media', 'Low': 'Baja'}
+
+        for checklist in checklist_data:
+            writer.writerow([f"Checklist: {checklist['name']} ({checklist['category']})"])
+            writer.writerow(['Severidad', 'Total', 'Sí', 'No', 'N/A', 'Sin responder'])
+
+            summary = checklist['summary']
+            for sev in ['Critical', 'High', 'Medium', 'Low']:
+                if sev in summary['severity_breakdown']:
+                    stats = summary['severity_breakdown'][sev]
+                    writer.writerow([
+                        sev_map.get(sev, sev),
+                        stats['total'],
+                        stats['yes'],
+                        stats['no'],
+                        stats['na'],
+                        stats['unanswered']
+                    ])
+
+            writer.writerow([])
+
+        writer.writerow([f'Reporte generado por CyberLynx el {datetime.now().strftime("%d/%m/%Y %H:%M")}'])
+
+        output = BytesIO()
+        output.write(buffer.getvalue().encode('utf-8-sig'))
+        output.seek(0)
+        return output
         

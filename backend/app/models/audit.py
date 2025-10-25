@@ -46,6 +46,37 @@ class Audit(db.Model):
     @staticmethod
     def get_valid_statuses():
         return ['Created', 'In_Progress', 'Completed']
-    
+
+    def update_status_based_on_checklists(self):
+        """
+        Actualiza automáticamente el estado de la auditoría basándose en los checklists:
+        - 'Created': Estado inicial (sin checklists o todos los checklists eliminados)
+        - 'In_Progress': Al menos un checklist asignado, pero no todos completados
+        - 'Completed': Todos los checklists asignados están completados
+        """
+        from app.models.checklist import AuditChecklist
+
+        checklists = AuditChecklist.query.filter_by(audit_id=self.id).all()
+
+        if not checklists:
+            if self.status != 'Created':
+                self.status = 'Created'
+                self.started_at = None
+                self.completed_at = None
+        else:
+            all_completed = all(checklist.status == 'Completed' for checklist in checklists)
+
+            if all_completed:
+                if self.status != 'Completed':
+                    self.status = 'Completed'
+                    self.completed_at = datetime.utcnow()
+            else:
+                if self.status == 'Created':
+                    self.status = 'In_Progress'
+                    self.started_at = datetime.utcnow()
+                elif self.status == 'Completed':
+                    self.status = 'In_Progress'
+                    self.completed_at = None
+
     def __repr__(self):
         return f'<Audit {self.name}>'

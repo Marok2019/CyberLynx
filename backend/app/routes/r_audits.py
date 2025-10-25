@@ -235,13 +235,18 @@ def start_audit_checklist(audit_id):
             template_id=template_id,
             status='In_Progress'
         )
-        
+
         db.session.add(audit_checklist)
         db.session.commit()
-        
+
+        # Actualizar estado de la auditoría automáticamente
+        audit.update_status_based_on_checklists()
+        db.session.commit()
+
         return jsonify({
             'message': 'Checklist started successfully',
-            'checklist': audit_checklist.to_dict()
+            'checklist': audit_checklist.to_dict(),
+            'audit_status': audit.status
         }), 201
         
     except Exception as e:
@@ -310,15 +315,22 @@ def answer_checklist_question(audit_id, checklist_id):
         # Verificar si se completó el checklist
         total_questions = audit_checklist.template.questions.count()
         answered_questions = audit_checklist.responses.count()
-        
+
         if answered_questions >= total_questions and audit_checklist.status == 'In_Progress':
             audit_checklist.status = 'Completed'
             audit_checklist.completed_at = datetime.utcnow()
             db.session.commit()
-        
+
+            # Actualizar estado de la auditoría automáticamente
+            from app.models.audit import Audit
+            audit = Audit.query.get(audit_id)
+            audit.update_status_based_on_checklists()
+            db.session.commit()
+
         return jsonify({
             'message': 'Answer saved successfully',
-            'checklist': audit_checklist.to_dict()
+            'checklist': audit_checklist.to_dict(),
+            'audit_status': audit_checklist.audit.status
         }), 200
         
     except Exception as e:
