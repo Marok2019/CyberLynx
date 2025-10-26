@@ -15,6 +15,7 @@ class ReportGenerator:
     
     @staticmethod
     def generate_pdf_report(audit, checklist_data):
+        """Genera reporte de auditoría en formato PDF"""
         buffer = BytesIO()
         doc = SimpleDocTemplate(
             buffer,
@@ -44,7 +45,7 @@ class ReportGenerator:
 
         story = []
 
-        # === Portada (página 1) ===
+        # PORTADA
         story.append(Spacer(1, 2*inch))
         story.append(Paragraph("CyberLynx", title_style))
         story.append(Paragraph("Reporte de Auditoría de Seguridad", styles['Heading2']))
@@ -64,7 +65,7 @@ class ReportGenerator:
 
         story.append(PageBreak())
 
-        # === Resumen Ejecutivo (página 2) ===
+        # RESUMEN EJECUTIVO
         story.append(Paragraph("Resumen Ejecutivo", heading_style))
 
         total_questions = 0
@@ -80,35 +81,31 @@ class ReportGenerator:
             total_yes += summary['yes_count']
             total_no += summary['no_count']
             total_na += summary['na_count']
-
+            
             for severity, stats in summary['severity_breakdown'].items():
                 if severity == 'Critical' and stats['no'] > 0:
-                    critical_findings.append({
-                        'checklist': checklist['name'],
-                        'count': stats['no']
-                    })
+                    critical_findings.append({'checklist': checklist['name'], 'count': stats['no']})
                 elif severity == 'High' and stats['no'] > 0:
-                    high_findings.append({
-                        'checklist': checklist['name'],
-                        'count': stats['no']
-                    })
+                    high_findings.append({'checklist': checklist['name'], 'count': stats['no']})
 
-        compliance_rate = round((total_yes / (total_yes + total_no) * 100), 2) if (total_yes + total_no) > 0 else 0
+        preguntas_aplicables = total_yes + total_no
+        tasa_cumplimiento = round((total_yes / preguntas_aplicables * 100), 2) if preguntas_aplicables > 0 else 0
 
-        resumen_texto = f"""
-        <b>Preguntas evaluadas:</b> {total_questions}<br/>
+        summary_text = f"""
+        <b>Total de Preguntas Evaluadas:</b> {total_questions}<br/>
+        <b>Preguntas Aplicables:</b> {preguntas_aplicables} <i>(excluye N/A)</i><br/>
         <b>Cumple (Sí):</b> {total_yes}<br/>
-        <b>No cumple (No):</b> {total_no}<br/>
-        <b>No aplica (N/A):</b> {total_na}<br/>
-        <b>Porcentaje de cumplimiento global:</b> {compliance_rate}%<br/><br/>
-        <b>Hallazgos críticos:</b> {len(critical_findings)}<br/>
-        <b>Hallazgos de prioridad alta:</b> {len(high_findings)}<br/>
+        <b>No Cumple (No):</b> {total_no}<br/>
+        <b>No Aplica (N/A):</b> {total_na}<br/>
+        <b>Tasa de Cumplimiento:</b> {tasa_cumplimiento}%<br/>
+        <br/>
+        <b>Hallazgos Críticos:</b> {len(critical_findings)}<br/>
+        <b>Hallazgos de Prioridad Alta:</b> {len(high_findings)}<br/>
         """
-        story.append(Paragraph(resumen_texto, styles['Normal']))
-
+        story.append(Paragraph(summary_text, styles['Normal']))
         story.append(PageBreak())
 
-        # === Detalle por Checklist (cada bloque se mantiene junto) ===
+        # DETALLE POR CHECKLIST
         story.append(Paragraph("Detalle por Checklist", heading_style))
 
         sev_map = {'Critical': 'Crítica', 'High': 'Alta', 'Medium': 'Media', 'Low': 'Baja'}
@@ -116,12 +113,7 @@ class ReportGenerator:
         for checklist in checklist_data:
             bloque = []
             bloque.append(Spacer(1, 0.2*inch))
-            bloque.append(
-                Paragraph(
-                    f"<b>{checklist['name']}</b> ({checklist['category']})",
-                    styles['Heading3']
-                )
-            )
+            bloque.append(Paragraph(f"<b>{checklist['name']}</b> ({checklist['category']})", styles['Heading3']))
 
             summary = checklist['summary']
             severity_data = [['Severidad', 'Total', 'Sí', 'No', 'N/A', 'Sin responder']]
@@ -152,26 +144,20 @@ class ReportGenerator:
 
             bloque.append(severity_table)
             bloque.append(Spacer(1, 0.3*inch))
-
             story.append(KeepTogether(bloque))
 
         story.append(PageBreak())
 
-        # === Hallazgos críticos ===
+        # HALLAZGOS CRÍTICOS
         if critical_findings or high_findings:
             story.append(Paragraph("Hallazgos Críticos y de Alta Prioridad", heading_style))
             hallazgos_data = [['Checklist', 'Severidad', 'Cantidad', 'Acción requerida']]
 
             for finding in critical_findings:
-                hallazgos_data.append([
-                    finding['checklist'], 'Crítica', finding['count'],
-                    'Atender de inmediato'
-                ])
+                hallazgos_data.append([finding['checklist'], 'Crítica', finding['count'], 'Atender de inmediato'])
+            
             for finding in high_findings:
-                hallazgos_data.append([
-                    finding['checklist'], 'Alta', finding['count'],
-                    'Resolver en menos de 30 días'
-                ])
+                hallazgos_data.append([finding['checklist'], 'Alta', finding['count'], 'Resolver en menos de 30 días'])
 
             hallazgos_table = Table(hallazgos_data, colWidths=[2.5*inch, 1*inch, 0.8*inch, 2*inch])
             hallazgos_table.setStyle(TableStyle([
@@ -183,17 +169,16 @@ class ReportGenerator:
                 ('BACKGROUND', (0, 1), (-1, -1), HexColor('#ffebee'))
             ]))
             story.append(hallazgos_table)
-
             story.append(PageBreak())
 
-        # === Recomendaciones ===
+        # RECOMENDACIONES
         story.append(Paragraph("Recomendaciones", heading_style))
         recomendaciones = [
-            "1. Atienda inmediatamente los hallazgos críticos identificados.",
+            "1. Atienda inmediatamente los hallazgos críticos para mitigar vulnerabilidades de alto riesgo.",
             "2. Genere un plan de acción para hallazgos de prioridad alta dentro de 30 días.",
-            "3. Programe auditorías periódicas para dar seguimiento a la mejora continua.",
+            "3. Programe auditorías trimestrales para garantizar el cumplimiento continuo.",
             "4. Refuerce la capacitación en seguridad para todo el personal.",
-            "5. Actualice políticas de seguridad conforme a las brechas detectadas."
+            "5. Revise y actualice las políticas de seguridad según las brechas identificadas."
         ]
         for rec in recomendaciones:
             story.append(Paragraph(rec, styles['Normal']))
@@ -209,11 +194,13 @@ class ReportGenerator:
 
     @staticmethod
     def generate_excel_report(audit, checklist_data):
+        """Genera reporte de auditoría en formato Excel"""
         buffer = BytesIO()
         wb = Workbook()
 
         ws_summary = wb.active
         ws_summary.title = "Resumen"
+        
         ws_summary['A1'] = "Reporte de Auditoría de Seguridad - CyberLynx"
         ws_summary['A1'].font = Font(size=16, bold=True, color="1976D2")
         ws_summary.merge_cells('A1:D1')
@@ -246,20 +233,35 @@ class ReportGenerator:
             total_no += summary['no_count']
             total_na += summary['na_count']
 
-        compliance_rate = round((total_yes / (total_yes + total_no) * 100), 2) if (total_yes + total_no) > 0 else 0
+        preguntas_aplicables = total_yes + total_no
+        compliance_rate = round((total_yes / preguntas_aplicables * 100), 2) if preguntas_aplicables > 0 else 0
 
         ws_summary['A9'] = "RESUMEN EJECUTIVO"
         ws_summary['A9'].font = Font(bold=True, size=14)
         ws_summary['A10'] = "Preguntas evaluadas:"
         ws_summary['B10'] = total_questions
-        ws_summary['A11'] = "Cumple (Sí):"
-        ws_summary['B11'] = total_yes
-        ws_summary['A12'] = "No cumple (No):"
-        ws_summary['B12'] = total_no
-        ws_summary['A13'] = "No aplica (N/A):"
-        ws_summary['B13'] = total_na
-        ws_summary['A14'] = "Porcentaje de cumplimiento:"
-        ws_summary['B14'] = f"{compliance_rate}%"
+        ws_summary['A11'] = "Preguntas aplicables:"
+        ws_summary['B11'] = preguntas_aplicables
+        ws_summary['C11'] = "(excluye N/A)"
+        ws_summary['A12'] = "Cumple (Sí):"
+        ws_summary['B12'] = total_yes
+        ws_summary['A13'] = "No cumple (No):"
+        ws_summary['B13'] = total_no
+        ws_summary['A14'] = "No aplica (N/A):"
+        ws_summary['B14'] = total_na
+        ws_summary['A15'] = "Tasa de cumplimiento:"
+        ws_summary['B15'] = f"{compliance_rate}%"
+        ws_summary['C15'] = "Sí / (Sí + No)"
+
+        for row in range(10, 16):
+            ws_summary[f'A{row}'].font = Font(bold=True)
+
+        ws_summary.column_dimensions['A'].width = 30
+        ws_summary.column_dimensions['B'].width = 20
+        ws_summary.column_dimensions['C'].width = 20
+
+        # HOJAS POR CHECKLIST
+        sev_map = {'Critical': 'Crítica', 'High': 'Alta', 'Medium': 'Media', 'Low': 'Baja'}
 
         for checklist in checklist_data:
             ws = wb.create_sheet(title=checklist['name'][:31])
@@ -283,7 +285,6 @@ class ReportGenerator:
                 ws[f'{col}4'].alignment = Alignment(horizontal='center')
 
             row = 5
-            sev_map = {'Critical': 'Crítica', 'High': 'Alta', 'Medium': 'Media', 'Low': 'Baja'}
             summary = checklist['summary']
 
             for sev in ['Critical', 'High', 'Medium', 'Low']:
@@ -301,22 +302,31 @@ class ReportGenerator:
 
                     row += 1
 
+            ws[f'A{row + 1}'] = "Tasa de cumplimiento:"
+            ws[f'A{row + 1}'].font = Font(bold=True)
+            
+            checklist_aplicables = summary['yes_count'] + summary['no_count']
+            checklist_compliance = round((summary['yes_count'] / checklist_aplicables * 100), 2) if checklist_aplicables > 0 else 0
+            
+            ws[f'B{row + 1}'] = f"{checklist_compliance}%"
+            ws[f'C{row + 1}'] = f"({summary['yes_count']} / {checklist_aplicables})"
+
         wb.save(buffer)
         buffer.seek(0)
         return buffer
 
     @staticmethod
     def generate_csv_report(audit, checklist_data):
+        """Genera reporte de auditoría en formato CSV"""
         buffer = StringIO()
         writer = csv.writer(buffer)
 
         writer.writerow(['Reporte de Auditoría de Seguridad - CyberLynx'])
         writer.writerow([])
-
         writer.writerow(['Nombre de la auditoría:', audit.name])
         writer.writerow(['Estado:', audit.status])
         writer.writerow(['Fecha de inicio:', audit.created_at.strftime('%d/%m/%Y %H:%M')])
-        writer.writerow(['Fecha de finalización:', audit.completed_at.strftime('%d/%m/%Y %H:%M') if audit.completed_at else 'En progreso'])
+        writer.writerow(['Fecha de cierre:', audit.completed_at.strftime('%d/%m/%Y %H:%M') if audit.completed_at else 'En progreso'])
 
         if audit.description:
             writer.writerow(['Descripción:', audit.description])
@@ -335,14 +345,16 @@ class ReportGenerator:
             total_no += summary['no_count']
             total_na += summary['na_count']
 
-        compliance_rate = round((total_yes / (total_yes + total_no) * 100), 2) if (total_yes + total_no) > 0 else 0
+        preguntas_aplicables = total_yes + total_no
+        compliance_rate = round((total_yes / preguntas_aplicables * 100), 2) if preguntas_aplicables > 0 else 0
 
         writer.writerow(['RESUMEN EJECUTIVO'])
         writer.writerow(['Preguntas evaluadas:', total_questions])
+        writer.writerow(['Preguntas aplicables:', preguntas_aplicables, '(excluye N/A)'])
         writer.writerow(['Cumple (Sí):', total_yes])
         writer.writerow(['No cumple (No):', total_no])
         writer.writerow(['No aplica (N/A):', total_na])
-        writer.writerow(['Porcentaje de cumplimiento:', f"{compliance_rate}%"])
+        writer.writerow(['Tasa de cumplimiento:', f"{compliance_rate}%", 'Sí / (Sí + No)'])
         writer.writerow([])
 
         writer.writerow(['DETALLE POR CHECKLIST'])
@@ -367,6 +379,9 @@ class ReportGenerator:
                         stats['unanswered']
                     ])
 
+            checklist_aplicables = summary['yes_count'] + summary['no_count']
+            checklist_compliance = round((summary['yes_count'] / checklist_aplicables * 100), 2) if checklist_aplicables > 0 else 0
+            writer.writerow(['Tasa de cumplimiento:', f"{checklist_compliance}%", f"({summary['yes_count']} / {checklist_aplicables})"])
             writer.writerow([])
 
         writer.writerow([f'Reporte generado por CyberLynx el {datetime.now().strftime("%d/%m/%Y %H:%M")}'])
@@ -375,4 +390,3 @@ class ReportGenerator:
         output.write(buffer.getvalue().encode('utf-8-sig'))
         output.seek(0)
         return output
-        

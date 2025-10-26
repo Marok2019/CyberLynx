@@ -17,6 +17,8 @@ import {
     ArrowBack as BackIcon,
     PlayArrow as StartIcon,
     Assessment as SummaryIcon,
+    Download as DownloadIcon,
+    Close as CloseIcon,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import ChecklistTemplateSelector from '../components/ChecklistTemplateSelector';
@@ -25,15 +27,13 @@ import ChecklistSummary from '../components/ChecklistSummary';
 import { checklistService } from '../services/checklistService';
 import { auditService } from '../services/auditService';
 import { AuditChecklist, QuestionWithResponse } from '../types/Checklist';
-import { Assessment as ReportIcon } from '@mui/icons-material';
-import { Menu, MenuItem } from '@mui/material';
+import { useAuditReports } from '../hooks/useAuditReports';
 
-// Componente: Página de gestión de checklists de auditoría (US-005)
 const AuditChecklistPage: React.FC = () => {
     const { auditId } = useParams<{ auditId: string }>();
     const navigate = useNavigate();
-    const [reportMenuAnchor, setReportMenuAnchor] = useState<null | HTMLElement>(null);
-    const [generatingReport, setGeneratingReport] = useState(false);
+    const { generateReport, loading: reportLoading } = useAuditReports();
+
     const [auditName, setAuditName] = useState('');
     const [checklists, setChecklists] = useState<AuditChecklist[]>([]);
     const [selectedChecklist, setSelectedChecklist] = useState<AuditChecklist | null>(null);
@@ -49,83 +49,37 @@ const AuditChecklistPage: React.FC = () => {
         }
     }, [auditId]);
 
-    const handleGenerateReport = async (format: 'pdf' | 'xlsx' | 'csv') => {
-        setReportMenuAnchor(null);
-        setGeneratingReport(true);
-
-        try {
-            const response = await fetch(
-                `http://127.0.0.1:5000/api/reports/audits/${auditId}/report?format=${format}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                }
-            );
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Error al generar el reporte');
-            }
-
-            // Descargar archivo
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-
-            // Obtener nombre de archivo del header Content-Disposition o generar uno
-            const contentDisposition = response.headers.get('Content-Disposition');
-            let filename = `CyberLynx_Audit_Report.${format}`;
-
-            if (contentDisposition) {
-                const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
-                if (filenameMatch) {
-                    filename = filenameMatch[1];
-                }
-            }
-
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-
-            alert(`Reporte generado exitosamente: ${filename}`);
-
-        } catch (err: any) {
-            console.error('Error generating report:', err);
-            setError(err.message || 'Error al generar el reporte');
-        } finally {
-            setGeneratingReport(false);
-        }
-    };
-
-
-    const loadAuditAndChecklists = async () => {
+    const loadAuditAndChecklists = async (selectLatest: boolean = false) => {
         try {
             setLoading(true);
             setError(null);
 
-            // Cargar información de auditoría
             const auditResponse = await auditService.getAudits();
             const audit = auditResponse.audits.find(a => a.id === parseInt(auditId!));
             if (audit) {
                 setAuditName(audit.name);
             }
 
-            // Cargar checklists de la auditoría
             const response = await checklistService.getAuditChecklists(parseInt(auditId!));
             setChecklists(response.checklists);
 
-            // Si hay checklists, seleccionar el primero en progreso o el último
             if (response.checklists.length > 0) {
-                const inProgress = response.checklists.find(c => c.status === 'In_Progress');
-                const toSelect = inProgress || response.checklists[0];
+                let toSelect;
+
+                if (selectLatest) {
+                    toSelect = response.checklists[response.checklists.length - 1];
+                } else {
+                    const inProgress = response.checklists.find(c => c.status === 'In_Progress');
+                    toSelect = inProgress || response.checklists[0];
+                }
+
                 await loadChecklistDetail(toSelect);
+            } else {
+                setSelectedChecklist(null);
+                setQuestionsWithResponses([]);
             }
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error al cargar checklists de auditoría');
+            setError(err.response?.data?.error || 'Error loading audit checklists');
         } finally {
             setLoading(false);
         }
@@ -140,7 +94,7 @@ const AuditChecklistPage: React.FC = () => {
             setSelectedChecklist(checklist);
             setQuestionsWithResponses(detail.questions_with_responses);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error al cargar detalle del checklist');
+            setError(err.response?.data?.error || 'Error loading checklist detail');
         }
     };
 
@@ -149,9 +103,9 @@ const AuditChecklistPage: React.FC = () => {
             setError(null);
             await checklistService.startChecklist(parseInt(auditId!), { template_id: templateId });
             setTemplateSelectorOpen(false);
-            await loadAuditAndChecklists();
+            await loadAuditAndChecklists(true);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error al iniciar el checklist');
+            setError(err.response?.data?.error || 'Error starting checklist');
         }
     };
 
@@ -160,6 +114,78 @@ const AuditChecklistPage: React.FC = () => {
             await loadChecklistDetail(selectedChecklist);
             await loadAuditAndChecklists();
         }
+    };
+
+    const handleDeleteChecklist = async (checklist: AuditChecklist, event: React.MouseEvent) => {
+        event.stopPropagation();
+
+        const isCompleted = checklist.status === 'Completed';
+
+        const confirmMessage = isCompleted
+            ? `⚠️ ADVERTENCIA: Este checklist está COMPLETADO\n\nChecklist: ${checklist.template_name}\nProgreso: ${checklist.answered_questions}/${checklist.total_questions} preguntas\n\n¿Está seguro de eliminarlo?`
+            : `¿Eliminar "${checklist.template_name}"?\n\nProgreso: ${checklist.answered_questions}/${checklist.total_questions} preguntas`;
+
+        if (!window.confirm(confirmMessage)) {
+            return;
+        }
+
+        try {
+            setError(null);
+
+            await checklistService.deleteChecklist(
+                parseInt(auditId!),
+                checklist.id,
+                isCompleted
+            );
+
+            if (selectedChecklist?.id === checklist.id) {
+                setSelectedChecklist(null);
+                setQuestionsWithResponses([]);
+            }
+
+            await loadAuditAndChecklists();
+            alert('✅ Checklist eliminado exitosamente');
+        } catch (err: any) {
+            const errorData = err.warning ? err : err.response?.data;
+
+            if (errorData?.warning) {
+                const doubleConfirm = window.confirm(
+                    `${errorData.warning}\n\n${errorData.message}\n\n¿Confirmar eliminación?`
+                );
+
+                if (doubleConfirm) {
+                    try {
+                        await checklistService.deleteChecklist(parseInt(auditId!), checklist.id, true);
+
+                        if (selectedChecklist?.id === checklist.id) {
+                            setSelectedChecklist(null);
+                            setQuestionsWithResponses([]);
+                        }
+
+                        await loadAuditAndChecklists();
+                        alert('✅ Checklist eliminado');
+                    } catch (retryErr: any) {
+                        setError(retryErr.response?.data?.error || 'Error eliminando checklist');
+                    }
+                }
+            } else {
+                setError(errorData?.error || 'Error eliminando checklist');
+            }
+        }
+    };
+
+    const handleGenerateReport = async () => {
+        const format = window.prompt(
+            '¿En qué formato desea el reporte?\n\nOpciones: pdf, xlsx, csv',
+            'pdf'
+        )?.toLowerCase();
+
+        if (!format || !['pdf', 'xlsx', 'csv'].includes(format)) {
+            if (format) alert('Formato inválido. Use: pdf, xlsx, o csv');
+            return;
+        }
+
+        await generateReport(parseInt(auditId!), format as 'pdf' | 'xlsx' | 'csv');
     };
 
     if (loading) {
@@ -192,32 +218,14 @@ const AuditChecklistPage: React.FC = () => {
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    {/* Botón de generar reporte (US-006) */}
                     <Button
                         variant="outlined"
-                        startIcon={<ReportIcon />}
-                        onClick={(e) => setReportMenuAnchor(e.currentTarget)}
-                        disabled={checklists.length === 0 || generatingReport}
+                        startIcon={<DownloadIcon />}
+                        onClick={handleGenerateReport}
+                        disabled={reportLoading}
                     >
-                        {generatingReport ? 'Generando...' : 'Generar Reporte'}
+                        {reportLoading ? 'Generando...' : 'Generar Reporte'}
                     </Button>
-
-                    {/* Menú de formatos de reporte */}
-                    <Menu
-                        anchorEl={reportMenuAnchor}
-                        open={Boolean(reportMenuAnchor)}
-                        onClose={() => setReportMenuAnchor(null)}
-                    >
-                        <MenuItem onClick={() => handleGenerateReport('pdf')}>
-                            Reporte PDF
-                        </MenuItem>
-                        <MenuItem onClick={() => handleGenerateReport('xlsx')}>
-                            Reporte Excel (XLSX)
-                        </MenuItem>
-                        <MenuItem onClick={() => handleGenerateReport('csv')}>
-                            Exportar CSV
-                        </MenuItem>
-                    </Menu>
 
                     <Button
                         variant="contained"
@@ -239,7 +247,7 @@ const AuditChecklistPage: React.FC = () => {
                 <Card>
                     <CardContent sx={{ textAlign: 'center', py: 6 }}>
                         <Typography variant="h6" gutterBottom>
-                            No hay checklists iniciados
+                            No hay checklists iniciados aún
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                             Inicia tu primer checklist de seguridad para esta auditoría
@@ -255,11 +263,16 @@ const AuditChecklistPage: React.FC = () => {
                 </Card>
             ) : (
                 <>
-                    {/* Selector de checklist activo */}
                     <Box sx={{ mb: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Checklists Activos
-                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Typography variant="h6">
+                                Checklists Activos
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                                {checklists.filter(c => c.status === 'Completed').length} de {checklists.length} completados
+                            </Typography>
+                        </Box>
+
                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                             {checklists.map((checklist) => (
                                 <Chip
@@ -269,6 +282,19 @@ const AuditChecklistPage: React.FC = () => {
                                     color={selectedChecklist?.id === checklist.id ? 'primary' : 'default'}
                                     variant={selectedChecklist?.id === checklist.id ? 'filled' : 'outlined'}
                                     icon={checklist.status === 'Completed' ? <SummaryIcon /> : <StartIcon />}
+                                    onDelete={(e) => handleDeleteChecklist(checklist, e as any)}
+                                    deleteIcon={
+                                        <CloseIcon
+                                            sx={{
+                                                fontSize: 18,
+                                                '&:hover': {
+                                                    color: 'error.main',
+                                                    transform: 'scale(1.2)',
+                                                    transition: 'all 0.2s'
+                                                }
+                                            }}
+                                        />
+                                    }
                                 />
                             ))}
                         </Box>
