@@ -15,7 +15,7 @@ export interface LoginResponse {
 export const authService = {
     login: async (credentials: LoginRequest): Promise<LoginResponse> => {
         const response = await api.post('/auth/login', credentials);
-        return response.data;
+        return response.data.access_token ? response.data : { access_token: response.data.access_token, user: response.data.user, message: 'Credenciales inválidas' };
     },
 
     getProfile: async (): Promise<{ user: User }> => {

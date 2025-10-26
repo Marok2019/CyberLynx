@@ -185,17 +185,23 @@ def delete_audit(audit_id):
     
     try:
         audit = Audit.query.get_or_404(audit_id)
-        
+        # Eliminar checklists relacionados
+        from app.models.checklist import AuditChecklist
+        checklists = AuditChecklist.query.filter_by(audit_id=audit_id).all()
+        for checklist in checklists:
+            db.session.delete(checklist)
+        db.session.flush()  # Asegura que se eliminen antes de borrar el audit
+
         # Limpiar relaciones antes de eliminar
         audit.assets.clear()
-        
+
         db.session.delete(audit)
         db.session.commit()
-        
+
         return jsonify({
             'message': 'Audit deleted successfully'
         }), 200
-        
+
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Error deleting audit: {str(e)}'}), 500

@@ -30,7 +30,7 @@ def login():
                 'message': 'Login successful'
             }), 200
         
-        return jsonify({'error': 'Invalid credentials'}), 401
+        return jsonify({'error': 'Credenciales inválidas'}), 401
         
     except Exception as e:
         print(f"🚨 Login error: {str(e)}")  # Debug temporal
