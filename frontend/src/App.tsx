@@ -215,7 +215,7 @@ const DashboardContent: React.FC = () => {
 
         <Paper sx={{ p: 3, bgcolor: '#f3e5f5', border: '2px solid #9c27b0' }}>
           <Typography variant="h6" sx={{ color: '#9c27b0' }} gutterBottom>
-            Activos Activos
+            Activos Operativos
           </Typography>
           <Typography variant="h3" fontWeight="bold">
             {stats.activeAssets}
