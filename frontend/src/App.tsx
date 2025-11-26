@@ -107,12 +107,235 @@ const AuthenticatedApp: React.FC<{ user: User; onLogout: () => void }> = ({ user
 
 
 // Componente: Contenido del panel principal (US-011)
-const DashboardContent: React.FC = () => (
-  <Paper sx={{ p: 3 }}>
-    <Typography variant="h4" gutterBottom>Panel Principal</Typography>
-    <Typography>Resumen del sistema próximamente...</Typography>
-  </Paper>
-);
+const DashboardContent: React.FC = () => {
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardStats();
+  }, []);
+
+  const loadDashboardStats = async () => {
+    try {
+      setLoading(true);
+
+      const [assetsRes, auditsRes] = await Promise.all([
+        fetch('http://127.0.0.1:5000/api/assets', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }),
+        fetch('http://127.0.0.1:5000/api/audits', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        })
+      ]);
+
+      const assetsData = await assetsRes.json();
+      const auditsData = await auditsRes.json();
+
+      const assets = assetsData.assets || [];
+      const audits = auditsData.audits || [];
+
+      setStats({
+        totalAssets: assets.length,
+        activeAssets: assets.filter((a: any) => a.status === 'Active').length,
+        inactiveAssets: assets.filter((a: any) => a.status === 'Inactive').length,
+        maintenanceAssets: assets.filter((a: any) => a.status === 'Maintenance').length,
+        hardwareAssets: assets.filter((a: any) => a.type === 'Hardware').length,
+        softwareAssets: assets.filter((a: any) => a.type === 'Software').length,
+        networkAssets: assets.filter((a: any) => a.type === 'Network').length,
+        totalAudits: audits.length,
+        createdAudits: audits.filter((a: any) => a.status === 'Created').length,
+        inProgressAudits: audits.filter((a: any) => a.status === 'In_Progress').length,
+        completedAudits: audits.filter((a: any) => a.status === 'Completed').length,
+      });
+    } catch (error) {
+      console.error('Error cargando estadísticas:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Paper sx={{ p: 3 }}>
+        <Typography>Cargando estadísticas...</Typography>
+      </Paper>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <Paper sx={{ p: 3 }}>
+        <Typography>Error al cargar las estadísticas</Typography>
+      </Paper>
+    );
+  }
+
+  return (
+    <Box>
+      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
+        Panel Principal
+      </Typography>
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 3, mb: 4 }}>
+        <Paper sx={{ p: 3, bgcolor: '#e3f2fd', border: '2px solid #1976d2' }}>
+          <Typography variant="h6" color="primary" gutterBottom>
+            Total de Activos
+          </Typography>
+          <Typography variant="h3" fontWeight="bold">
+            {stats.totalAssets}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Activos registrados en el sistema
+          </Typography>
+        </Paper>
+
+        <Paper sx={{ p: 3, bgcolor: '#e8f5e9', border: '2px solid #4caf50' }}>
+          <Typography variant="h6" sx={{ color: '#4caf50' }} gutterBottom>
+            Auditorías Completadas
+          </Typography>
+          <Typography variant="h3" fontWeight="bold">
+            {stats.completedAudits}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            De {stats.totalAudits} auditorías totales
+          </Typography>
+        </Paper>
+
+        <Paper sx={{ p: 3, bgcolor: '#fff3e0', border: '2px solid #ff9800' }}>
+          <Typography variant="h6" sx={{ color: '#ff9800' }} gutterBottom>
+            Auditorías en Progreso
+          </Typography>
+          <Typography variant="h3" fontWeight="bold">
+            {stats.inProgressAudits}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Auditorías activas actualmente
+          </Typography>
+        </Paper>
+
+        <Paper sx={{ p: 3, bgcolor: '#f3e5f5', border: '2px solid #9c27b0' }}>
+          <Typography variant="h6" sx={{ color: '#9c27b0' }} gutterBottom>
+            Activos Activos
+          </Typography>
+          <Typography variant="h3" fontWeight="bold">
+            {stats.activeAssets}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Operativos y disponibles
+          </Typography>
+        </Paper>
+      </Box>
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Distribución de Activos por Estado
+          </Typography>
+          <Box sx={{ mt: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="body2">Activos</Typography>
+              <Typography variant="body2" fontWeight="bold">
+                {stats.activeAssets} ({Math.round((stats.activeAssets / stats.totalAssets) * 100)}%)
+              </Typography>
+            </Box>
+            <Box sx={{ width: '100%', height: 10, bgcolor: '#e0e0e0', borderRadius: 1, mb: 2 }}>
+              <Box sx={{ width: `${(stats.activeAssets / stats.totalAssets) * 100}%`, height: '100%', bgcolor: '#4caf50', borderRadius: 1 }} />
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="body2">Inactivos</Typography>
+              <Typography variant="body2" fontWeight="bold">
+                {stats.inactiveAssets} ({Math.round((stats.inactiveAssets / stats.totalAssets) * 100)}%)
+              </Typography>
+            </Box>
+            <Box sx={{ width: '100%', height: 10, bgcolor: '#e0e0e0', borderRadius: 1, mb: 2 }}>
+              <Box sx={{ width: `${(stats.inactiveAssets / stats.totalAssets) * 100}%`, height: '100%', bgcolor: '#f44336', borderRadius: 1 }} />
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="body2">Mantenimiento</Typography>
+              <Typography variant="body2" fontWeight="bold">
+                {stats.maintenanceAssets} ({Math.round((stats.maintenanceAssets / stats.totalAssets) * 100)}%)
+              </Typography>
+            </Box>
+            <Box sx={{ width: '100%', height: 10, bgcolor: '#e0e0e0', borderRadius: 1 }}>
+              <Box sx={{ width: `${(stats.maintenanceAssets / stats.totalAssets) * 100}%`, height: '100%', bgcolor: '#ff9800', borderRadius: 1 }} />
+            </Box>
+          </Box>
+        </Paper>
+
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Distribución de Activos por Tipo
+          </Typography>
+          <Box sx={{ mt: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="body2">Hardware</Typography>
+              <Typography variant="body2" fontWeight="bold">
+                {stats.hardwareAssets} ({Math.round((stats.hardwareAssets / stats.totalAssets) * 100)}%)
+              </Typography>
+            </Box>
+            <Box sx={{ width: '100%', height: 10, bgcolor: '#e0e0e0', borderRadius: 1, mb: 2 }}>
+              <Box sx={{ width: `${(stats.hardwareAssets / stats.totalAssets) * 100}%`, height: '100%', bgcolor: '#1976d2', borderRadius: 1 }} />
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="body2">Software</Typography>
+              <Typography variant="body2" fontWeight="bold">
+                {stats.softwareAssets} ({Math.round((stats.softwareAssets / stats.totalAssets) * 100)}%)
+              </Typography>
+            </Box>
+            <Box sx={{ width: '100%', height: 10, bgcolor: '#e0e0e0', borderRadius: 1, mb: 2 }}>
+              <Box sx={{ width: `${(stats.softwareAssets / stats.totalAssets) * 100}%`, height: '100%', bgcolor: '#9c27b0', borderRadius: 1 }} />
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="body2">Red</Typography>
+              <Typography variant="body2" fontWeight="bold">
+                {stats.networkAssets} ({Math.round((stats.networkAssets / stats.totalAssets) * 100)}%)
+              </Typography>
+            </Box>
+            <Box sx={{ width: '100%', height: 10, bgcolor: '#e0e0e0', borderRadius: 1 }}>
+              <Box sx={{ width: `${(stats.networkAssets / stats.totalAssets) * 100}%`, height: '100%', bgcolor: '#ff5722', borderRadius: 1 }} />
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Estado de Auditorías
+        </Typography>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mt: 2 }}>
+          <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Creadas
+            </Typography>
+            <Typography variant="h4" fontWeight="bold" color="primary">
+              {stats.createdAudits}
+            </Typography>
+          </Box>
+          <Box sx={{ p: 2, bgcolor: '#fff3e0', borderRadius: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              En Progreso
+            </Typography>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: '#ff9800' }}>
+              {stats.inProgressAudits}
+            </Typography>
+          </Box>
+          <Box sx={{ p: 2, bgcolor: '#e8f5e9', borderRadius: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Completadas
+            </Typography>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: '#4caf50' }}>
+              {stats.completedAudits}
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
+    </Box>
+  );
+};
 
 // Componente: Gestión de activos digitales (US-001, US-002, US-003)
 const AssetsContent: React.FC = () => {
@@ -268,7 +491,21 @@ const AssetsContent: React.FC = () => {
         <Typography variant="h4">Gestión de Activos</Typography>
         <Button
           variant="contained"
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            if (showForm) {
+              setShowForm(false);
+              setEditingAsset(null);
+              setFormData({
+                name: '',
+                type: 'Hardware',
+                location: '',
+                status: 'Active',
+                description: ''
+              });
+            } else {
+              setShowForm(true);
+            }
+          }}
         >
           {showForm ? 'Cancelar' : 'Agregar Activo'}
         </Button>
@@ -697,7 +934,15 @@ const AuditsContent: React.FC = () => {
         <Typography variant="h4">Gestión de Auditorías</Typography>
         <Button
           variant="contained"
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            if (showForm) {
+              setShowForm(false);
+              setEditingAudit(null);
+              resetForm();
+            } else {
+              setShowForm(true);
+            }
+          }}
         >
           {showForm ? 'Cancelar' : 'Crear Nueva Auditoría'}
         </Button>
