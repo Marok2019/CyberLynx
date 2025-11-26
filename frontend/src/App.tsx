@@ -514,7 +514,7 @@ const AssetsContent: React.FC = () => {
       {/* Sección de filtros y búsqueda (US-002) */}
       <Paper sx={{ p: 2, mb: 3, bgcolor: '#f8f9fa' }}>
         <Typography variant="h6" gutterBottom>
-          🔍 Buscar y Filtrar Activos (US-002)
+          🔍 Buscar y Filtrar Activos
         </Typography>
         <Box sx={{
           display: 'flex',
@@ -605,7 +605,7 @@ const AssetsContent: React.FC = () => {
       {showForm && (
         <Paper sx={{ p: 2, mb: 3, bgcolor: '#f5f5f5' }}>
           <Typography variant="h6" gutterBottom>
-            {editingAsset ? `✏️ Editar Activo: ${editingAsset.name}` : '➕ Crear Nuevo Activo (US-001)'}
+            {editingAsset ? `✏️ Editar Activo: ${editingAsset.name}` : '➕ Crear Nuevo Activo'}
           </Typography>
           <form onSubmit={handleSubmit}>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
@@ -952,7 +952,7 @@ const AuditsContent: React.FC = () => {
       {showForm && (
         <Paper sx={{ p: 3, mb: 3, bgcolor: '#f0f8ff', border: '2px solid #1976d2' }}>
           <Typography variant="h6" gutterBottom>
-            {editingAudit ? `✏️ Editar Auditoría: ${editingAudit.name}` : '📋 Crear Nueva Auditoría (US-004)'}
+            {editingAudit ? `✏️ Editar Auditoría: ${editingAudit.name}` : '📋 Crear Nueva Auditoría'}
           </Typography>
 
           <form onSubmit={handleSubmit}>
